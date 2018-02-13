@@ -1,0 +1,63 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega128"</DEVICE>
+ <WORKING_DIR>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\Debug\Lab5.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>Lab5.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>Lab5.map</FILE>
+  <FILE>Lab5.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>48</LINE></INIT>
+  <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>63</LINE></MAIN>
+  <AddOp1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>599</LINE></AddOp1>
+  <AddOp2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>601</LINE></AddOp2>
+  <ADD16_OP1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>638</LINE></ADD16_OP1>
+  <ADD16_OP2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>640</LINE></ADD16_OP2>
+  <ADD16_Result><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>644</LINE></ADD16_Result>
+  <ADD16><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>251</LINE></ADD16>
+  <SubOp1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>605</LINE></SubOp1>
+  <SubOp2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>607</LINE></SubOp2>
+  <SUB16_OP1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>648</LINE></SUB16_OP1>
+  <SUB16_OP2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>650</LINE></SUB16_OP2>
+  <SUB16_Result><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>654</LINE></SUB16_Result>
+  <SUB16><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>289</LINE></SUB16>
+  <MulOp1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>611</LINE></MulOp1>
+  <MulOp2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>613</LINE></MulOp2>
+  <MUL24_OP1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>658</LINE></MUL24_OP1>
+  <MUL24_OP2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>660</LINE></MUL24_OP2>
+  <MUL24_Result><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>664</LINE></MUL24_Result>
+  <MUL24><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>323</LINE></MUL24>
+  <OperandD><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>617</LINE></OperandD>
+  <COMP_OP1><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>668</LINE></COMP_OP1>
+  <OperandE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>619</LINE></OperandE>
+  <COMP_OP2><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>670</LINE></COMP_OP2>
+  <OperandF><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>621</LINE></OperandF>
+  <COMP_OP3><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>672</LINE></COMP_OP3>
+  <COMPOUND><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>402</LINE></COMPOUND>
+  <DONE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>238</LINE></DONE>
+  <MULTLOOP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>352</LINE></MULTLOOP>
+  <MULTSKIP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>372</LINE></MULTSKIP>
+  <COMP_Result><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>676</LINE></COMP_Result>
+  <MUL16><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>519</LINE></MUL16>
+  <addrB><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>631</LINE></addrB>
+  <LAddrP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>632</LINE></LAddrP>
+  <MUL16_OLOOP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>546</LINE></MUL16_OLOOP>
+  <addrA><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>630</LINE></addrA>
+  <MUL16_ILOOP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab5\Lab5\main.asm</FILE><LINE>553</LINE></MUL16_ILOOP>
+ </LABELS>
+</ASSEMBLER_INFO>

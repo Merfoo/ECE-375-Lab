@@ -1,0 +1,35 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega128"</DEVICE>
+ <WORKING_DIR>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\Debug\Lab1.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>Lab1.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>Lab1.map</FILE>
+  <FILE>Lab1.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <INIT><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>109</LINE></INIT>
+  <MAIN><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>135</LINE></MAIN>
+  <NEXT><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>142</LINE></NEXT>
+  <HitRight><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>156</LINE></HitRight>
+  <HitLeft><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>189</LINE></HitLeft>
+  <Wait><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>225</LINE></Wait>
+  <Loop><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>230</LINE></Loop>
+  <OLoop><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>231</LINE></OLoop>
+  <ILoop><FILE>c:\users\fauzi\Documents\Atmel Studio\7.0\Lab1\Lab1\main.asm</FILE><LINE>232</LINE></ILoop>
+ </LABELS>
+</ASSEMBLER_INFO>
