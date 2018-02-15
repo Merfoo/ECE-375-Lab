@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm Tue Feb 13 20:03:46 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm Thu Feb 15 14:50:54 2018
 
 
 EQU  SIGNATURE_000 0000001e
@@ -871,7 +871,11 @@ DEF  mpr          r16
 DEF  waitcnt      r17
 DEF  ilcnt        r18
 DEF  olcnt        r19
-EQU  WTime        000000c8
+DEF  memcnt       r20
+DEF  prevState    r21
+EQU  WTime        0000000a
+EQU  WTimeLong    0000001e
+EQU  WTime180     000000ff
 EQU  WskrR        00000000
 EQU  WskrL        00000001
 EQU  EngDirR      00000000
@@ -880,11 +884,24 @@ EQU  MovFwd       00000003
 EQU  MovBck       00000000
 EQU  TurnR        00000002
 EQU  TurnL        00000001
+EQU  StateN       00000000
+EQU  StateL       00000001
+EQU  StateR       00000002
+EQU  maxHit       00000005
 CSEG INIT         00000046
-CSEG RWhisker     0000005c
-CSEG LWhisker     0000006b
-CSEG MAIN         00000059
-CSEG Wait         0000007a
-CSEG Loop         0000007d
-CSEG OLoop        0000007e
-CSEG ILoop        0000007f
+CSEG RWhisker     0000005d
+CSEG LWhisker     0000007b
+CSEG MAIN         0000005a
+CSEG SameR        0000006c
+CSEG Turn180R     00000069
+CSEG RegularR     0000006e
+CSEG TurnAround   000000a8
+CSEG EndR         00000074
+CSEG Wait         00000099
+CSEG SameL        0000008a
+CSEG Turn180L     00000087
+CSEG RegularL     0000008c
+CSEG EndL         00000092
+CSEG Loop         0000009c
+CSEG OLoop        0000009d
+CSEG ILoop        0000009e

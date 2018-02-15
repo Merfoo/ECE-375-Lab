@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm Tue Feb 13 20:03:46 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm Thu Feb 15 14:50:54 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
@@ -1293,8 +1293,12 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  .def	waitcnt = r17
                                  .def	ilcnt = r18
                                  .def	olcnt = r19
+                                 .def	memcnt = r20
+                                 .def	prevState = r21
                                  
-                                 .equ	WTime = 200;
+                                 .equ	WTime = 10
+                                 .equ	WTimeLong = 30
+                                 .equ	WTime180 = 255
                                  
                                  .equ	WskrR = 0				; Right Whisker Input Bit
                                  .equ	WskrL = 1				; Left Whisker Input Bit
@@ -1305,6 +1309,13 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  .equ	MovBck = $00
                                  .equ	TurnR = (1 << EngDirL)
                                  .equ	TurnL = (1 << EngDirR)
+                                 
+                                 .equ	StateN = 0
+                                 .equ	StateL = 1
+                                 .equ	StateR = 2
+                                 
+                                 .equ	maxHit = 5
+                                 
                                  
                                  ;***********************************************************
                                  ;*	Start of Code Segment
@@ -1321,12 +1332,12 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  
                                  		; Right whisker
                                  .org	$0002
-000002 d059                      		rcall	RWhisker
+000002 d05a                      		rcall	RWhisker
 000003 9518                      		reti
                                  
                                  		; Left whisker
                                  .org	$0004
-000004 d066                      		rcall	LWhisker
+000004 d076                      		rcall	LWhisker
 000005 9518                      		reti
                                  
                                  .org	$0046					; End of Interrupt Vectors
@@ -1335,39 +1346,40 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  ;*	Program Initialization
                                  ;***********************************************************
                                  INIT:							; The initialization routine
-                                 		
-000046 ec18                      		ldi		waitcnt, WTime
                                  
                                  		; Initialize Stack Pointer
-000047 ef0f                      		ldi		mpr, low(RAMEND)
-000048 bf0d                      		out		SPL, mpr
-000049 e100                      		ldi		mpr, high(RAMEND)
-00004a bf0e                      		out		SPH, mpr
+000046 ef0f                      		ldi		mpr, low(RAMEND)
+000047 bf0d                      		out		SPL, mpr
+000048 e100                      		ldi		mpr, high(RAMEND)
+000049 bf0e                      		out		SPH, mpr
                                  
                                  		; Initialize Port B for output
-00004b ef0f                      		ldi		mpr, $FF
-00004c bb07                      		out		DDRB, mpr
-00004d e000                      		ldi		mpr, $00
-00004e bb08                      		out		PORTB, mpr
+00004a ef0f                      		ldi		mpr, $FF
+00004b bb07                      		out		DDRB, mpr
+00004c e000                      		ldi		mpr, $00
+00004d bb08                      		out		PORTB, mpr
                                  
                                  		; Initialize Port D for input
-00004f ef0c                      		ldi		mpr, ~(1 << WskrL | 1 << WskrR)
-000050 bb01                      		out		DDRD, mpr
-000051 ef0f                      		ldi		mpr, $FF
-000052 bb02                      		out		PORTD, mpr
+00004e ef0c                      		ldi		mpr, ~(1 << WskrL | 1 << WskrR)
+00004f bb01                      		out		DDRD, mpr
+000050 ef0f                      		ldi		mpr, $FF
+000051 bb02                      		out		PORTD, mpr
+                                 
+000052 e040                      		ldi		memcnt, 0
+000053 e050                      		ldi		prevState, stateN
                                  
                                  		; Initialize external interrupts
                                  			; Set the Interrupt Sense Control to falling edge 
-000053 e00a                      		ldi		mpr, 0b00001010
-000054 9300 006a                 		sts		EICRA, mpr
+000054 e00a                      		ldi		mpr, 0b00001010
+000055 9300 006a                 		sts		EICRA, mpr
                                  
                                  		; Configure the External Interrupt Mask
-000056 e003                      		ldi		mpr, (1 << WskrL | 1 << WskrR)
-000057 bf09                      		out		EIMSK, mpr
+000057 e003                      		ldi		mpr, (1 << WskrL | 1 << WskrR)
+000058 bf09                      		out		EIMSK, mpr
                                  
                                  		; Turn on interrupts
                                  			; NOTE: This must be the last thing to do in the INIT function
-000058 9478                      		sei
+000059 9478                      		sei
                                  
                                  ;***********************************************************
                                  ;*	Main Program
@@ -1375,10 +1387,10 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  MAIN:							; The Main program
                                  
                                  		; TODO: ???
-000059 e003                      		ldi		mpr, movfwd
-00005a bb08                      		out		portb, mpr		
+00005a e003                      		ldi		mpr, movfwd
+00005b bb08                      		out		portb, mpr		
                                  
-00005b cffd                      		rjmp	MAIN			; Create an infinite while loop to signify the 
+00005c cffd                      		rjmp	MAIN			; Create an infinite while loop to signify the 
                                  								; end of the program.
                                  
                                  ;***********************************************************
@@ -1398,30 +1410,62 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  RWHISKER:							; Begin a function with a label
                                  
                                  		; Save variable by pushing them to the stack
-00005c 930f                      		push	mpr
-00005d b70f                      		in		mpr, SREG
+00005d 931f                      		push	waitcnt
 00005e 930f                      		push	mpr
+00005f b70f                      		in		mpr, SREG
+000060 930f                      		push	mpr
                                  
+                                 		; Init wait count to normal
+000061 e01a                      		ldi		waitcnt, WTime
+                                 
+                                 		; Check previous whisker state
+000062 3052                      		cpi		prevState, stateR
+000063 f041                      		breq	SameR
+                                 
+                                 		; Previous whisker state was different, update previous state
+000064 e052                      		ldi		prevState, stateR
+                                 
+                                 		; Increment mem count, turning around if equal to max hit
+000065 9543                      		inc		memcnt
+000066 3045                      		cpi		memcnt, maxHit
+000067 f009                      		breq	Turn180R
+000068 c005                      		rjmp	RegularR
+                                 
+                                 Turn180R:
+                                 		; We need to make 180 turn
+000069 e040                      		ldi		memcnt, 0
+00006a d03d                      		rcall	TurnAround
+00006b c008                      		rjmp	EndR
+                                 
+                                 		; Same whisker was hit twice
+                                 SameR:
+                                 		; Back up and turn twice as long
+00006c e11e                      		ldi		waitcnt, WTimeLong
+00006d e040                      		ldi		memcnt, 0
+                                 
+                                 RegularR:
                                  		; Back up
-00005f e000                      		ldi		mpr, MovBck
-000060 bb08                      		out		PORTB, mpr
-000061 d018                      		rcall	Wait
+00006e e000                      		ldi		mpr, MovBck
+00006f bb08                      		out		PORTB, mpr
+000070 d028                      		rcall	Wait
                                  
                                  		; Turn left
-000062 e001                      		ldi		mpr, TurnL
-000063 bb08                      		out		PORTB, mpr
-000064 d015                      		rcall	Wait
+000071 e001                      		ldi		mpr, TurnL
+000072 bb08                      		out		PORTB, mpr
+000073 d025                      		rcall	Wait
                                  
+                                 EndR:
                                  		; Restore variable by popping them from the stack in reverse order
-000065 910f                      		pop		mpr
-000066 bf0f                      		out		SREG, mpr
-000067 910f                      		pop		mpr
+000074 910f                      		pop		mpr
+000075 bf0f                      		out		SREG, mpr
+000076 910f                      		pop		mpr
+000077 911f                      		pop		waitcnt
                                  
                                  		; Clear queue
-000068 e003                      		ldi		mpr, $03
-000069 bf08                      		out		EIFR, mpr
+000078 e003                      		ldi		mpr, $03
+000079 bf08                      		out		EIFR, mpr
                                  
-00006a 9508                      		ret						; End a function with RET
+00007a 9508                      		ret						; End a function with RET
                                  
                                  ;-----------------------------------------------------------
                                  ; Func: LWHISKER
@@ -1430,30 +1474,62 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  LWHISKER:							; Begin a function with a label
                                  
                                  		; Save variable by pushing them to the stack
-00006b 930f                      		push	mpr
-00006c b70f                      		in		mpr, SREG
-00006d 930f                      		push	mpr
+00007b 931f                      		push	waitcnt
+00007c 930f                      		push	mpr
+00007d b70f                      		in		mpr, SREG
+00007e 930f                      		push	mpr
                                  
+                                 		; Init wait count to normal
+00007f e01a                      		ldi		waitcnt, WTime
+                                 
+                                 		; Check previous whisker state
+000080 3051                      		cpi		prevState, stateL
+000081 f041                      		breq	SameL
+                                 
+                                 		; Previous whisker state was different, update previous state
+000082 e051                      		ldi		prevState, stateL
+                                 
+                                 		; Increment mem count, turning around if equal to max hit
+000083 9543                      		inc		memcnt
+000084 3045                      		cpi		memcnt, maxHit
+000085 f009                      		breq	Turn180L
+000086 c005                      		rjmp	RegularL
+                                 
+                                 Turn180L:
+                                 		; We need to make 180 turn
+000087 e040                      		ldi		memcnt, 0
+000088 d01f                      		rcall	TurnAround
+000089 c008                      		rjmp	EndL
+                                 
+                                 		; Same whisker was hit twice
+                                 SameL:
+                                 		; Back up and turn twice as long
+00008a e11e                      		ldi		waitcnt, WTimeLong
+00008b e040                      		ldi		memcnt, 0
+                                 
+                                 RegularL:
                                  		; Back up
-00006e e000                      		ldi		mpr, MovBck
-00006f bb08                      		out		PORTB, mpr
-000070 d009                      		rcall	Wait
+00008c e000                      		ldi		mpr, MovBck
+00008d bb08                      		out		PORTB, mpr
+00008e d00a                      		rcall	Wait
                                  
                                  		; Turn right
-000071 e002                      		ldi		mpr, TurnR
-000072 bb08                      		out		PORTB, mpr
-000073 d006                      		rcall	Wait
+00008f e002                      		ldi		mpr, TurnR
+000090 bb08                      		out		PORTB, mpr
+000091 d007                      		rcall	Wait
                                  
+                                 EndL:
                                  		; Restore variable by popping them from the stack in reverse order
-000074 910f                      		pop		mpr
-000075 bf0f                      		out		SREG, mpr
-000076 910f                      		pop		mpr
+000092 910f                      		pop		mpr
+000093 bf0f                      		out		SREG, mpr
+000094 910f                      		pop		mpr
+000095 911f                      		pop		waitcnt
                                  
                                  		; Clear queue
-000077 e003                      		ldi		mpr, $03
-000078 bf08                      		out		EIFR, mpr
+000096 e003                      		ldi		mpr, $03
+000097 bf08                      		out		EIFR, mpr
                                  
-000079 9508                      		ret						; End a function with RET
+000098 9508                      		ret						; End a function with RET
                                  
                                  ;----------------------------------------------------------------
                                  ; Sub:	Wait
@@ -1464,23 +1540,51 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab6\Lab6\main.asm(18): Including fi
                                  ;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
                                  ;----------------------------------------------------------------
                                  Wait:
-00007a 931f                      		push	waitcnt			; Save wait register
-00007b 932f                      		push	ilcnt			; Save ilcnt register
-00007c 933f                      		push	olcnt			; Save olcnt register
+000099 931f                      		push	waitcnt			; Save wait register
+00009a 932f                      		push	ilcnt			; Save ilcnt register
+00009b 933f                      		push	olcnt			; Save olcnt register
                                  
-00007d ee30                      Loop:	ldi		olcnt, 224		; load olcnt register
-00007e ee2d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
-00007f 952a                      ILoop:	dec		ilcnt			; decrement ilcnt
-000080 f7f1                      		brne	ILoop			; Continue Inner Loop
-000081 953a                      		dec		olcnt		; decrement olcnt
-000082 f7d9                      		brne	OLoop			; Continue Outer Loop
-000083 951a                      		dec		waitcnt		; Decrement wait 
-000084 f7c1                      		brne	Loop			; Continue Wait loop	
+00009c ee30                      Loop:	ldi		olcnt, 224		; load olcnt register
+00009d ee2d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
+00009e 952a                      ILoop:	dec		ilcnt			; decrement ilcnt
+00009f f7f1                      		brne	ILoop			; Continue Inner Loop
+0000a0 953a                      		dec		olcnt		; decrement olcnt
+0000a1 f7d9                      		brne	OLoop			; Continue Outer Loop
+0000a2 951a                      		dec		waitcnt		; Decrement wait 
+0000a3 f7c1                      		brne	Loop			; Continue Wait loop	
                                  
-000085 913f                      		pop		olcnt		; Restore olcnt register
-000086 912f                      		pop		ilcnt		; Restore ilcnt register
-000087 911f                      		pop		waitcnt		; Restore wait register
-000088 9508                      		ret				; Return from subroutine
+0000a4 913f                      		pop		olcnt		; Restore olcnt register
+0000a5 912f                      		pop		ilcnt		; Restore ilcnt register
+0000a6 911f                      		pop		waitcnt		; Restore wait register
+0000a7 9508                      		ret				; Return from subroutine
+                                 
+                                 ;----------------------------------------------------------------
+                                 ; Sub:	TurnAround
+                                 ; Desc:	Backs dat ass up and turns it around
+                                 ;----------------------------------------------------------------
+                                 TurnAround:
+                                 		; Save variable by pushing them to the stack
+0000a8 930f                      		push	mpr
+0000a9 931f                      		push	waitcnt
+                                 
+                                 		; Back up
+                                 
+0000aa e000                      		ldi		mpr, MovBck
+0000ab bb08                      		out		PORTB, mpr
+0000ac e01a                      		ldi		waitcnt, WTime
+0000ad dfeb                      		rcall	Wait
+                                 
+                                 		; Turn 180
+0000ae e002                      		ldi		mpr, TurnR
+0000af bb08                      		out		PORTB, mpr
+0000b0 ef1f                      		ldi		waitcnt, WTime180
+0000b1 dfe7                      		rcall	Wait
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+0000b2 911f                      		pop		waitcnt
+0000b3 910f                      		pop		mpr
+                                 
+0000b4 9508                      		ret						; End a function with RET
                                  
                                  ;***********************************************************
                                  ;*	Stored Program Data
@@ -1510,38 +1614,38 @@ counted separately from r26..r31 here.
 "ATmega128" register use summary:
 x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  42 r17:   4 r18:   4 r19:   4 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
+r13:   0 r14:   0 r15:   0 r16:  48 r17:  15 r18:   4 r19:   4 r20:   9 
+r21:   5 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
 r29:   0 r30:   0 r31:   0 
-Registers used: 4 out of 35 (11.4%)
+Registers used: 6 out of 35 (17.1%)
 
 "ATmega128" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   0 brge  :   0 brhc  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   4 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
 brne  :   3 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   0 cpse  :   0 dec   :   3 elpm  :   0 eor   :   0 fmul  :   0 
-fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   0 
-jmp   :   0 ld    :   0 ldd   :   0 ldi   :  18 lds   :   0 lpm   :   0 
+cpi   :   4 cpse  :   0 dec   :   3 elpm  :   0 eor   :   0 fmul  :   0 
+fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   2 
+jmp   :   0 ld    :   0 ldd   :   0 ldi   :  33 lds   :   0 lpm   :   0 
 lsl   :   0 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 
-mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  16 
-pop   :   7 push  :   7 rcall :   6 ret   :   3 reti  :   2 rjmp  :   2 
+mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  18 
+pop   :  11 push  :  11 rcall :  10 ret   :   4 reti  :   2 rjmp  :   6 
 rol   :   0 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
 sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
 seh   :   0 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 
 sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 
 sts   :   1 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
 
-Instructions used: 13 out of 114 (11.4%)
+Instructions used: 16 out of 114 (14.0%)
 
 "ATmega128" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000112    144      0    144  131072   0.1%
+[.cseg] 0x000000 0x00016a    232      0    232  131072   0.2%
 [.dseg] 0x000100 0x000100      0      0      0    4096   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    4096   0.0%
 

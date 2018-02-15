@@ -24,8 +24,12 @@
 .def	waitcnt = r17
 .def	ilcnt = r18
 .def	olcnt = r19
+.def	memcnt = r20
+.def	prevState = r21
 
-.equ	WTime = 200;
+.equ	WTime = 10
+.equ	WTimeLong = 30
+.equ	WTime180 = 255
 
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
@@ -36,6 +40,13 @@
 .equ	MovBck = $00
 .equ	TurnR = (1 << EngDirL)
 .equ	TurnL = (1 << EngDirR)
+
+.equ	StateN = 0
+.equ	StateL = 1
+.equ	StateR = 2
+
+.equ	maxHit = 5
+
 
 ;***********************************************************
 ;*	Start of Code Segment
@@ -66,8 +77,6 @@
 ;*	Program Initialization
 ;***********************************************************
 INIT:							; The initialization routine
-		
-		ldi		waitcnt, WTime
 
 		; Initialize Stack Pointer
 		ldi		mpr, low(RAMEND)
@@ -86,6 +95,9 @@ INIT:							; The initialization routine
 		out		DDRD, mpr
 		ldi		mpr, $FF
 		out		PORTD, mpr
+
+		ldi		memcnt, 0
+		ldi		prevState, stateN
 
 		; Initialize external interrupts
 			; Set the Interrupt Sense Control to falling edge 
@@ -129,10 +141,40 @@ MAIN:							; The Main program
 RWHISKER:							; Begin a function with a label
 
 		; Save variable by pushing them to the stack
+		push	waitcnt
 		push	mpr
 		in		mpr, SREG
 		push	mpr
 
+		; Init wait count to normal
+		ldi		waitcnt, WTime
+
+		; Check previous whisker state
+		cpi		prevState, stateR
+		breq	SameR
+
+		; Previous whisker state was different, update previous state
+		ldi		prevState, stateR
+
+		; Increment mem count, turning around if equal to max hit
+		inc		memcnt
+		cpi		memcnt, maxHit
+		breq	Turn180R
+		rjmp	RegularR
+
+Turn180R:
+		; We need to make 180 turn
+		ldi		memcnt, 0
+		rcall	TurnAround
+		rjmp	EndR
+
+		; Same whisker was hit twice
+SameR:
+		; Back up and turn twice as long
+		ldi		waitcnt, WTimeLong
+		ldi		memcnt, 0
+
+RegularR:
 		; Back up
 		ldi		mpr, MovBck
 		out		PORTB, mpr
@@ -143,10 +185,12 @@ RWHISKER:							; Begin a function with a label
 		out		PORTB, mpr
 		rcall	Wait
 
+EndR:
 		; Restore variable by popping them from the stack in reverse order
 		pop		mpr
 		out		SREG, mpr
 		pop		mpr
+		pop		waitcnt
 
 		; Clear queue
 		ldi		mpr, $03
@@ -161,10 +205,40 @@ RWHISKER:							; Begin a function with a label
 LWHISKER:							; Begin a function with a label
 
 		; Save variable by pushing them to the stack
+		push	waitcnt
 		push	mpr
 		in		mpr, SREG
 		push	mpr
 
+		; Init wait count to normal
+		ldi		waitcnt, WTime
+
+		; Check previous whisker state
+		cpi		prevState, stateL
+		breq	SameL
+
+		; Previous whisker state was different, update previous state
+		ldi		prevState, stateL
+
+		; Increment mem count, turning around if equal to max hit
+		inc		memcnt
+		cpi		memcnt, maxHit
+		breq	Turn180L
+		rjmp	RegularL
+
+Turn180L:
+		; We need to make 180 turn
+		ldi		memcnt, 0
+		rcall	TurnAround
+		rjmp	EndL
+
+		; Same whisker was hit twice
+SameL:
+		; Back up and turn twice as long
+		ldi		waitcnt, WTimeLong
+		ldi		memcnt, 0
+
+RegularL:
 		; Back up
 		ldi		mpr, MovBck
 		out		PORTB, mpr
@@ -175,10 +249,12 @@ LWHISKER:							; Begin a function with a label
 		out		PORTB, mpr
 		rcall	Wait
 
+EndL:
 		; Restore variable by popping them from the stack in reverse order
 		pop		mpr
 		out		SREG, mpr
 		pop		mpr
+		pop		waitcnt
 
 		; Clear queue
 		ldi		mpr, $03
@@ -212,6 +288,34 @@ ILoop:	dec		ilcnt			; decrement ilcnt
 		pop		ilcnt		; Restore ilcnt register
 		pop		waitcnt		; Restore wait register
 		ret				; Return from subroutine
+
+;----------------------------------------------------------------
+; Sub:	TurnAround
+; Desc:	Backs dat ass up and turns it around
+;----------------------------------------------------------------
+TurnAround:
+		; Save variable by pushing them to the stack
+		push	mpr
+		push	waitcnt
+
+		; Back up
+
+		ldi		mpr, MovBck
+		out		PORTB, mpr
+		ldi		waitcnt, WTime
+		rcall	Wait
+
+		; Turn 180
+		ldi		mpr, TurnR
+		out		PORTB, mpr
+		ldi		waitcnt, WTime180
+		rcall	Wait
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		waitcnt
+		pop		mpr
+
+		ret						; End a function with RET
 
 ;***********************************************************
 ;*	Stored Program Data
