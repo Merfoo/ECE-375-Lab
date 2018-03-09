@@ -1,0 +1,39 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega128"</DEVICE>
+ <WORKING_DIR>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\Debug\Lab7.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>Lab7.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>Lab7.map</FILE>
+  <FILE>Lab7.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>68</LINE></INIT>
+  <SET_MIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>139</LINE></SET_MIN>
+  <SET_DEC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>171</LINE></SET_DEC>
+  <SET_INC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>207</LINE></SET_INC>
+  <SET_MAX><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>243</LINE></SET_MAX>
+  <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>127</LINE></MAIN>
+  <UPD_COMP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>276</LINE></UPD_COMP>
+  <WAIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>307</LINE></WAIT>
+  <SKIP_DEC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>189</LINE></SKIP_DEC>
+  <SKIP_INC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>225</LINE></SKIP_INC>
+  <Loop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>312</LINE></Loop>
+  <OLoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>313</LINE></OLoop>
+  <ILoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab7\Lab7\main.asm</FILE><LINE>314</LINE></ILoop>
+ </LABELS>
+</ASSEMBLER_INFO>
