@@ -35,6 +35,7 @@
 .equ	TurnR =   ($80|1<<(EngDirL-1))					;0b10100000 Turn Right Action Code
 .equ	TurnL =   ($80|1<<(EngDirR-1))					;0b10010000 Turn Left Action Code
 .equ	Halt =    ($80|1<<(EngEnR-1)|1<<(EngEnL-1))		;0b11001000 Halt Action Code
+.equ	Freeze =   $F8
 
 ;***********************************************************
 ;*	Start of Code Segment
@@ -136,8 +137,16 @@ CHECK_RIGHT:
 		rjmp	END
 CHECK_LEFT:
 		sbrs	mpr, PD6
-		rjmp	END
+		rjmp	CHECK_FREEZE
 		ldi		buf, TurnL
+		rcall	SEND_BUF
+
+		out		PORTB, buf
+		rjmp	END
+CHECK_FREEZE:
+		sbrs	mpr, PD7
+		rjmp	END
+		ldi		buf, Freeze
 		rcall	SEND_BUF
 
 		out		PORTB, buf

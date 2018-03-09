@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 13:31:40 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 15:36:33 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
@@ -1289,7 +1289,8 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ;***********************************************************
                                  .def	mpr = r16				; Multi-Purpose Register
                                  .def	lit = r17				; Register for light
-                                 .def	rFlag = r18				; Flag for address recieved
+                                 .def	received = r18			; Flag for address recieved
+                                 .def	numbFrozen = r22		; Number of times bot froxen
                                  
                                  .def	waitcnt = r19			; Register for wait time
                                  .def	ilcnt = r20				; Inner loop register for wait function
@@ -1314,6 +1315,8 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  .equ	TurnR =   (1<<EngDirL)				;0b01000000 Turn Right Action Code
                                  .equ	TurnL =   (1<<EngDirR)				;0b00100000 Turn Left Action Code
                                  .equ	Halt =    (1<<EngEnR|1<<EngEnL)		;0b10010000 Halt Action Code
+                                 .equ	FreezeTx =   $F8	; Freeze signal from transmiter
+                                 .equ	FreezeRx =   $55	; Freeze signal receiver sends
                                  
                                  ;***********************************************************
                                  ;*	Start of Code Segment
@@ -1329,17 +1332,17 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ;Should have Interrupt vectors for:
                                  ;- Right whisker
                                  .org	$0002
-000002 d08f                      		rcall	RWhisker		; Call right whisker
+000002 d082                      		rcall	RWhisker		; Call right whisker
 000003 9518                      		reti
                                  
                                  ;- Left whisker
                                  .org	$0004
-000004 d09d                      		rcall	LWhisker		; Call left whisker
+000004 d090                      		rcall	LWhisker		; Call left whisker
 000005 9518                      		reti
                                  
                                  ;- USART receive
                                  .org	$003C
-00003c d02d                      		rcall	USART_RECV
+00003c d02f                      		rcall	USART_RECV
 00003d 9518                      		reti
                                  
                                  .org	$0046					; End of Interrupt Vectors
@@ -1375,7 +1378,7 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 000052 e002                      		ldi		mpr, $02
 000053 9300 009b                 		sts		UCSR1A, mpr
                                  
-000055 e900                      		ldi		mpr, 0b10010000
+000055 e908                      		ldi		mpr, 0b10011000
 000056 9300 009a                 		sts		UCSR1B, mpr
                                  	
 000058 e80e                      		ldi		mpr, 0b10001110
@@ -1407,12 +1410,18 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  		; Init lit
 000068 e010                      		ldi		lit, 0
                                  
+                                 		; Init received to 0
+000069 e020                      		ldi		received, 0
+                                 
+                                 		; Init number of times froxen 0
+00006a e060                      		ldi		numbFrozen, 0
+                                 
                                  ;***********************************************************
                                  ;*	Main Program
                                  ;***********************************************************
                                  MAIN:
                                  	;TODO: ???
-000069 cfff                      		rjmp	MAIN
+00006b cfff                      		rjmp	MAIN
                                  
                                  ;***********************************************************
                                  ;*	Functions and Subroutines
@@ -1423,61 +1432,40 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; Desc: Moves the TekBot USART recv
                                  ;-----------------------------------------------------------
                                  USART_RECV:
-00006a 930f                      		push	mpr
-00006b 9100 009c                 		lds		mpr, UDR1
+00006c 930f                      		push	mpr
+00006d 9100 009c                 		lds		mpr, UDR1
                                  
-00006d 3021                      		cpi		rFlag, 1
-00006e f031                      		breq	CHECK_HALT
+00006f 3505                      		cpi		mpr, FreezeRx
+000070 f411                      		brne	CHECK_RECEIVED
+000071 d054                      		rcall	FREEZE_BOT
+000072 c010                      		rjmp	END
                                  
-00006f 320a                      		cpi		mpr, BotAddress
-000070 f411                      		brne	END_RECV_ADDR
-000071 e021                      		ldi		rFlag, 1
-000072 c01d                      		rjmp	END
-                                 END_RECV_ADDR:
-000073 e020                      		ldi		rFlag, 0
-000074 c01b                      		rjmp	END
+                                 CHECK_RECEIVED:
+000073 3021                      		cpi		received, 1
+000074 f021                      		breq	ACTION_CODE
                                  
-                                 CHECK_HALT:
-000075 1f00                      		rol		mpr
-000076 e020                      		ldi		rFlag, 0
+000075 320a                      		cpi		mpr, BotAddress
+000076 f461                      		brne	END
+000077 e021                      		ldi		received, 1
+000078 c00a                      		rjmp	END
                                  
-000077 3900                      		cpi		mpr, Halt
-000078 f419                      		brne	CHECK_BCK
-000079 e910                      		ldi		lit, Halt
-00007a bb18                      		out		PORTB, lit
-00007b c014                      		rjmp	END
+                                 ACTION_CODE:
+000079 e020                      		ldi		received, 0
                                  
-                                 CHECK_BCK:
-00007c 3000                      		cpi		mpr, MovBck
-00007d f419                      		brne	CHECK_FWD
-00007e e010                      		ldi		lit, MovBck
-00007f bb18                      		out		PORTB, lit
-000080 c00f                      		rjmp	END
+00007a 3f08                      		cpi		mpr, FreezeTx
+00007b f419                      		brne	NON_FREEZE
+00007c d037                      		rcall	SEND_FREEZE
+00007d 940c 0083                 		jmp		END
                                  
-                                 CHECK_FWD:
-000081 3600                      		cpi		mpr, MovFwd
-000082 f419                      		brne	CHECK_RIGHT
-000083 e610                      		ldi		lit, MovFwd
-000084 bb18                      		out		PORTB, lit
-000085 c00a                      		rjmp	END
-                                 
-                                 CHECK_RIGHT:
-000086 3400                      		cpi		mpr, TurnR
-000087 f419                      		brne	CHECK_LEFT
-000088 e410                      		ldi		lit, TurnR
-000089 bb18                      		out		PORTB, lit
-00008a c005                      		rjmp	END
-                                 
-                                 CHECK_LEFT:
-00008b 3200                      		cpi		mpr, TurnL
-00008c f419                      		brne	END
-00008d e210                      		ldi		lit, TurnL
-00008e bb18                      		out		PORTB, lit
-00008f c000                      		rjmp	END
+                                 NON_FREEZE:
+00007f 0f00                      		lsl		mpr
+000080 2f10                      		mov		lit, mpr
+000081 bb18                      		out		PORTB, lit
+000082 c000                      		rjmp	END
                                  
                                  END:
-000090 910f                      		pop		mpr
-000091 9508                      		ret
+000083 910f                      		pop		mpr
+000084 9508                      		ret
                                  
                                  ;-----------------------------------------------------------
                                  ; Func: RWHISKER
@@ -1486,32 +1474,32 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  RWHISKER:							; Begin a function with a label
                                  
                                  		; Save variable by pushing them to the stack
-000092 930f                      		push	mpr			; Save mpr
-000093 b70f                      		in		mpr, SREG
-000094 930f                      		push	mpr			; Save the status register
+000085 930f                      		push	mpr			; Save mpr
+000086 b70f                      		in		mpr, SREG
+000087 930f                      		push	mpr			; Save the status register
                                  
                                  		; Back up
-000095 e000                      		ldi		mpr, MovBck
-000096 bb08                      		out		PORTB, mpr	; Move the bot backwards
-000097 d01a                      		rcall	Wait		; Call wait function
+000088 e000                      		ldi		mpr, MovBck
+000089 bb08                      		out		PORTB, mpr	; Move the bot backwards
+00008a d01a                      		rcall	Wait		; Call wait function
                                  
                                  		; Turn left
-000098 e200                      		ldi		mpr, TurnL
-000099 bb08                      		out		PORTB, mpr	; Turn bot left
-00009a d017                      		rcall	Wait		; Call wait function
+00008b e200                      		ldi		mpr, TurnL
+00008c bb08                      		out		PORTB, mpr	; Turn bot left
+00008d d017                      		rcall	Wait		; Call wait function
                                  
                                  		; Clear queue
-00009b e003                      		ldi		mpr, $03
-00009c bf08                      		out		EIFR, mpr	; Clear the interrupt flags
+00008e e003                      		ldi		mpr, $03
+00008f bf08                      		out		EIFR, mpr	; Clear the interrupt flags
                                  
-00009d bb18                      		out		PORTB, lit
+000090 bb18                      		out		PORTB, lit
                                  
                                  		; Restore variable by popping them from the stack in reverse order
-00009e 910f                      		pop		mpr
-00009f bf0f                      		out		SREG, mpr	; Restore status register
-0000a0 910f                      		pop		mpr			; Restore mpr
+000091 910f                      		pop		mpr
+000092 bf0f                      		out		SREG, mpr	; Restore status register
+000093 910f                      		pop		mpr			; Restore mpr
                                  
-0000a1 9508                      		ret						; End a function with RET
+000094 9508                      		ret						; End a function with RET
                                  
                                  ;-----------------------------------------------------------
                                  ; Func: LWHISKER
@@ -1520,32 +1508,32 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  LWHISKER:							; Begin a function with a label
                                  
                                  		; Save variable by pushing them to the stack
-0000a2 930f                      		push	mpr			; Save mpr
-0000a3 b70f                      		in		mpr, SREG
-0000a4 930f                      		push	mpr			; Save the status register
+000095 930f                      		push	mpr			; Save mpr
+000096 b70f                      		in		mpr, SREG
+000097 930f                      		push	mpr			; Save the status register
                                  
                                  		; Back up
-0000a5 e000                      		ldi		mpr, MovBck
-0000a6 bb08                      		out		PORTB, mpr	; Move the bot backwards
-0000a7 d00a                      		rcall	Wait		; Call wait function
+000098 e000                      		ldi		mpr, MovBck
+000099 bb08                      		out		PORTB, mpr	; Move the bot backwards
+00009a d00a                      		rcall	Wait		; Call wait function
                                  
                                  		; Turn right
-0000a8 e400                      		ldi		mpr, TurnR
-0000a9 bb08                      		out		PORTB, mpr	; Turn bot left
-0000aa d007                      		rcall	Wait		; Call wait function
+00009b e400                      		ldi		mpr, TurnR
+00009c bb08                      		out		PORTB, mpr	; Turn bot left
+00009d d007                      		rcall	Wait		; Call wait function
                                  
                                  		; Clear queue
-0000ab e003                      		ldi		mpr, $03
-0000ac bf08                      		out		EIFR, mpr	; Clear the interrupt flags
+00009e e003                      		ldi		mpr, $03
+00009f bf08                      		out		EIFR, mpr	; Clear the interrupt flags
                                  
-0000ad bb18                      		out		PORTB, lit
+0000a0 bb18                      		out		PORTB, lit
                                  
                                  		; Restore variable by popping them from the stack in reverse order
-0000ae 910f                      		pop		mpr
-0000af bf0f                      		out		SREG, mpr	; Restore status register
-0000b0 910f                      		pop		mpr			; Restore mpr
+0000a1 910f                      		pop		mpr
+0000a2 bf0f                      		out		SREG, mpr	; Restore status register
+0000a3 910f                      		pop		mpr			; Restore mpr
                                  
-0000b1 9508                      		ret						; End a function with RET
+0000a4 9508                      		ret						; End a function with RET
                                  
                                  ;----------------------------------------------------------------
                                  ; Sub:	Wait
@@ -1556,23 +1544,97 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
                                  ;----------------------------------------------------------------
                                  Wait:
-0000b2 933f                      		push	waitcnt			; Save wait register
-0000b3 934f                      		push	ilcnt			; Save ilcnt register
-0000b4 935f                      		push	olcnt			; Save olcnt register
+0000a5 933f                      		push	waitcnt			; Save wait register
+0000a6 934f                      		push	ilcnt			; Save ilcnt register
+0000a7 935f                      		push	olcnt			; Save olcnt register
                                  
-0000b5 ee50                      Loop:	ldi		olcnt, 224		; load olcnt register
-0000b6 ee4d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
-0000b7 954a                      ILoop:	dec		ilcnt			; decrement ilcnt
-0000b8 f7f1                      		brne	ILoop			; Continue Inner Loop
-0000b9 955a                      		dec		olcnt		; decrement olcnt
-0000ba f7d9                      		brne	OLoop			; Continue Outer Loop
-0000bb 953a                      		dec		waitcnt		; Decrement wait 
-0000bc f7c1                      		brne	Loop			; Continue Wait loop	
+0000a8 ee50                      Loop:	ldi		olcnt, 224		; load olcnt register
+0000a9 ee4d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
+0000aa 954a                      ILoop:	dec		ilcnt			; decrement ilcnt
+0000ab f7f1                      		brne	ILoop			; Continue Inner Loop
+0000ac 955a                      		dec		olcnt		; decrement olcnt
+0000ad f7d9                      		brne	OLoop			; Continue Outer Loop
+0000ae 953a                      		dec		waitcnt		; Decrement wait 
+0000af f7c1                      		brne	Loop			; Continue Wait loop	
                                  
-0000bd 915f                      		pop		olcnt		; Restore olcnt register
-0000be 914f                      		pop		ilcnt		; Restore ilcnt register
-0000bf 913f                      		pop		waitcnt		; Restore wait register
-0000c0 9508                      		ret				; Return from subroutine
+0000b0 915f                      		pop		olcnt		; Restore olcnt register
+0000b1 914f                      		pop		ilcnt		; Restore ilcnt register
+0000b2 913f                      		pop		waitcnt		; Restore wait register
+0000b3 9508                      		ret				; Return from subroutine
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: SEND_FREEZE
+                                 ; Desc: Sends the freeze signal to other botsss
+                                 ;-----------------------------------------------------------
+                                 SEND_FREEZE:
+0000b4 930f                      		push	mpr
+                                 
+0000b5 94f8                      		cli
+                                 SEND_DATA:
+0000b6 9100 009b                 		lds		mpr, UCSR1A
+0000b8 ff05                      		sbrs	mpr, UDRE1
+0000b9 cffc                      		rjmp	SEND_DATA
+0000ba e505                      		ldi		mpr, FreezeRx
+0000bb 9300 009c                 		sts		UDR1, mpr
+                                 		
+0000bd dfe7                      		rcall	Wait
+                                 
+                                 		; Clear USART interrupts
+0000be 9100 009b                 		lds		mpr, UCSR1A
+0000c0 6e00                      		ori		mpr, 0b11100000
+0000c1 9300 009b                 		sts		UCSR1A, mpr
+                                 
+0000c3 9478                      		sei
+                                 
+0000c4 910f                      		pop		mpr
+0000c5 9508                      		ret
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: FREEZE_BOT
+                                 ; Desc: Freezes the bot
+                                 ;-----------------------------------------------------------
+                                 FREEZE_BOT:
+0000c6 930f                      		push	mpr
+                                 
+                                 		; Halt bot
+0000c7 e900                      		ldi		mpr, Halt
+0000c8 bb08                      		out		PORTB, mpr
+                                 
+                                 		; Disable global interrupts
+0000c9 94f8                      		cli
+                                 
+                                 		; Incremement times frozen by 1
+0000ca 9563                      		inc		numbFrozen
+                                 
+                                 		; If froxen 3 times, disable everything i.e. interrupts
+0000cb 3063                      		cpi		numbFrozen, 3
+0000cc f071                      		breq	END_FREEZE
+                                 
+                                 		; Wait for 5 seconds
+0000cd dfd7                      		rcall	Wait
+0000ce dfd6                      		rcall	Wait
+0000cf dfd5                      		rcall	Wait
+0000d0 dfd4                      		rcall	Wait
+0000d1 dfd3                      		rcall	Wait
+                                 
+                                 		; Clear external interrupts
+0000d2 ef0f                      		ldi		mpr, $FF
+0000d3 bf08                      		out		EIFR, mpr
+                                 		
+                                 		; Clear USART interrupts
+0000d4 9100 009b                 		lds		mpr, UCSR1A
+0000d6 6e00                      		ori		mpr, 0b11100000
+0000d7 9300 009b                 		sts		UCSR1A, mpr		
+                                 
+                                 		; Enable global interrupts
+0000d9 9478                      		sei
+                                 
+                                 		; Resume what it was doing before freeze
+0000da bb18                      		out		PORTB, lit
+                                 
+                                 END_FREEZE:
+0000db 910f                      		pop		mpr
+0000dc 9508                      		ret
                                  
                                  ;***********************************************************
                                  ;*	Stored Program Data
@@ -1600,38 +1662,38 @@ counted separately from r26..r31 here.
 "ATmega128" register use summary:
 x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  60 r17:  13 r18:   4 r19:   4 r20:   4 
-r21:   4 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
+r13:   0 r14:   0 r15:   0 r16:  76 r17:   6 r18:   4 r19:   4 r20:   4 
+r21:   4 r22:   3 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
 r29:   0 r30:   0 r31:   0 
-Registers used: 6 out of 35 (17.1%)
+Registers used: 7 out of 35 (20.0%)
 
 "ATmega128" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   1 brge  :   0 brhc  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   2 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :   9 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brne  :   6 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
-clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
+clc   :   0 clh   :   0 cli   :   2 cln   :   0 clr   :   0 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   7 cpse  :   0 dec   :   3 elpm  :   0 eor   :   0 fmul  :   0 
-fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   0 
-jmp   :   0 ld    :   0 ldd   :   0 ldi   :  31 lds   :   1 lpm   :   0 
-lsl   :   0 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 
-mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  22 
-pop   :   8 push  :   8 rcall :   7 ret   :   4 reti  :   3 rjmp  :   9 
-rol   :   1 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
-sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
-seh   :   0 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 
+cpi   :   5 cpse  :   0 dec   :   3 elpm  :   0 eor   :   0 fmul  :   0 
+fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   1 
+jmp   :   1 ld    :   0 ldd   :   0 ldi   :  30 lds   :   4 lpm   :   0 
+lsl   :   1 lsr   :   0 mov   :   1 movw  :   0 mul   :   0 muls  :   0 
+mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   2 out   :  21 
+pop   :  10 push  :  10 rcall :  15 ret   :   6 reti  :   3 rjmp  :   6 
+rol   :   0 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
+sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   1 sec   :   0 
+seh   :   0 sei   :   3 sen   :   0 ser   :   0 ses   :   0 set   :   0 
 sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 
-sts   :   6 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
+sts   :   9 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
 
-Instructions used: 17 out of 114 (14.9%)
+Instructions used: 23 out of 114 (20.2%)
 
 "ATmega128" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000182    260      0    260  131072   0.2%
+[.cseg] 0x000000 0x0001ba    316      0    316  131072   0.2%
 [.dseg] 0x000100 0x000100      0      0      0    4096   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    4096   0.0%
 

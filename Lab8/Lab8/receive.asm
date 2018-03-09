@@ -20,7 +20,8 @@
 ;***********************************************************
 .def	mpr = r16				; Multi-Purpose Register
 .def	lit = r17				; Register for light
-.def	rFlag = r18				; Flag for address recieved
+.def	received = r18			; Flag for address recieved
+.def	numbFrozen = r22		; Number of times bot froxen
 
 .def	waitcnt = r19			; Register for wait time
 .def	ilcnt = r20				; Inner loop register for wait function
@@ -45,6 +46,8 @@
 .equ	TurnR =   (1<<EngDirL)				;0b01000000 Turn Right Action Code
 .equ	TurnL =   (1<<EngDirR)				;0b00100000 Turn Left Action Code
 .equ	Halt =    (1<<EngEnR|1<<EngEnL)		;0b10010000 Halt Action Code
+.equ	FreezeTx =   $F8	; Freeze signal from transmiter
+.equ	FreezeRx =   $55	; Freeze signal receiver sends
 
 ;***********************************************************
 ;*	Start of Code Segment
@@ -106,7 +109,7 @@ INIT:
 		ldi		mpr, $02
 		sts		UCSR1A, mpr
 
-		ldi		mpr, 0b10010000
+		ldi		mpr, 0b10011000
 		sts		UCSR1B, mpr
 	
 		ldi		mpr, 0b10001110
@@ -138,6 +141,12 @@ INIT:
 		; Init lit
 		ldi		lit, 0
 
+		; Init received to 0
+		ldi		received, 0
+
+		; Init number of times froxen 0
+		ldi		numbFrozen, 0
+
 ;***********************************************************
 ;*	Main Program
 ;***********************************************************
@@ -157,52 +166,31 @@ USART_RECV:
 		push	mpr
 		lds		mpr, UDR1
 
-		cpi		rFlag, 1
-		breq	CHECK_HALT
+		cpi		mpr, FreezeRx
+		brne	CHECK_RECEIVED
+		rcall	FREEZE_BOT
+		rjmp	END
+
+CHECK_RECEIVED:
+		cpi		received, 1
+		breq	ACTION_CODE
 
 		cpi		mpr, BotAddress
-		brne	END_RECV_ADDR
-		ldi		rFlag, 1
-		rjmp	END
-END_RECV_ADDR:
-		ldi		rFlag, 0
-		rjmp	END
-
-CHECK_HALT:
-		rol		mpr
-		ldi		rFlag, 0
-
-		cpi		mpr, Halt
-		brne	CHECK_BCK
-		ldi		lit, Halt
-		out		PORTB, lit
-		rjmp	END
-
-CHECK_BCK:
-		cpi		mpr, MovBck
-		brne	CHECK_FWD
-		ldi		lit, MovBck
-		out		PORTB, lit
-		rjmp	END
-
-CHECK_FWD:
-		cpi		mpr, MovFwd
-		brne	CHECK_RIGHT
-		ldi		lit, MovFwd
-		out		PORTB, lit
-		rjmp	END
-
-CHECK_RIGHT:
-		cpi		mpr, TurnR
-		brne	CHECK_LEFT
-		ldi		lit, TurnR
-		out		PORTB, lit
-		rjmp	END
-
-CHECK_LEFT:
-		cpi		mpr, TurnL
 		brne	END
-		ldi		lit, TurnL
+		ldi		received, 1
+		rjmp	END
+
+ACTION_CODE:
+		ldi		received, 0
+
+		cpi		mpr, FreezeTx
+		brne	NON_FREEZE
+		rcall	SEND_FREEZE
+		jmp		END
+
+NON_FREEZE:
+		lsl		mpr
+		mov		lit, mpr
 		out		PORTB, lit
 		rjmp	END
 
@@ -304,6 +292,80 @@ ILoop:	dec		ilcnt			; decrement ilcnt
 		pop		ilcnt		; Restore ilcnt register
 		pop		waitcnt		; Restore wait register
 		ret				; Return from subroutine
+
+;-----------------------------------------------------------
+; Func: SEND_FREEZE
+; Desc: Sends the freeze signal to other botsss
+;-----------------------------------------------------------
+SEND_FREEZE:
+		push	mpr
+
+		cli
+SEND_DATA:
+		lds		mpr, UCSR1A
+		sbrs	mpr, UDRE1
+		rjmp	SEND_DATA
+		ldi		mpr, FreezeRx
+		sts		UDR1, mpr
+		
+		rcall	Wait
+
+		; Clear USART interrupts
+		lds		mpr, UCSR1A
+		ori		mpr, 0b11100000
+		sts		UCSR1A, mpr
+
+		sei
+
+		pop		mpr
+		ret
+
+;-----------------------------------------------------------
+; Func: FREEZE_BOT
+; Desc: Freezes the bot
+;-----------------------------------------------------------
+FREEZE_BOT:
+		push	mpr
+
+		; Halt bot
+		ldi		mpr, Halt
+		out		PORTB, mpr
+
+		; Disable global interrupts
+		cli
+
+		; Incremement times frozen by 1
+		inc		numbFrozen
+
+		; If froxen 3 times, disable everything i.e. interrupts
+		cpi		numbFrozen, 3
+		breq	END_FREEZE
+
+		; Wait for 5 seconds
+		rcall	Wait
+		rcall	Wait
+		rcall	Wait
+		rcall	Wait
+		rcall	Wait
+
+		; Clear external interrupts
+		ldi		mpr, $FF
+		out		EIFR, mpr
+		
+		; Clear USART interrupts
+		lds		mpr, UCSR1A
+		ori		mpr, 0b11100000
+		sts		UCSR1A, mpr		
+
+		; Enable global interrupts
+		sei
+
+		; Resume what it was doing before freeze
+		out		PORTB, lit
+
+END_FREEZE:
+		pop		mpr
+		ret
 
 ;***********************************************************
 ;*	Stored Program Data
