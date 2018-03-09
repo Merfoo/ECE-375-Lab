@@ -22,6 +22,12 @@
 .def	lit = r17				; Register for light
 .def	rFlag = r18				; Flag for address recieved
 
+.def	waitcnt = r19			; Register for wait time
+.def	ilcnt = r20				; Inner loop register for wait function
+.def	olcnt = r21				; Outer loop register for wait function
+
+.equ	WTime = 100;			; Wait time for moving
+
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
 .equ	EngEnR = 4				; Right Engine Enable Bit
@@ -52,8 +58,16 @@
 		rjmp 	INIT			; Reset interrupt
 
 ;Should have Interrupt vectors for:
-;- Left whisker
 ;- Right whisker
+.org	$0002
+		rcall	RWhisker		; Call right whisker
+		reti
+
+;- Left whisker
+.org	$0004
+		rcall	LWhisker		; Call left whisker
+		reti
+
 ;- USART receive
 .org	$003C
 		rcall	USART_RECV
@@ -103,14 +117,26 @@ INIT:
 		sts		UBRR1H, mpr
 		ldi		mpr, $40
 		sts		UBRR1L, mpr
+
 		; From transmit file
 
 		;External Interrupts
-		;Set the External Interrupt Mask
 		;Set the Interrupt Sense Control to falling edge detection
+		ldi		mpr, 0b00001010
+		sts		EICRA, mpr			; Set port 0 and 1 to falling edge
+
+		; Configure the External Interrupt Mask
+		ldi		mpr, (1 << WskrL | 1 << WskrR)
+		out		EIMSK, mpr			; Enable port 0 and 1 for interrupts
+		
+		; Enable interrupts globally
 		sei
 
-	;Other
+		; Init waitcnt to 1 sec
+		ldi		waitcnt, WTime
+
+		; Init lit
+		ldi		lit, 0
 
 ;***********************************************************
 ;*	Main Program
@@ -129,7 +155,6 @@ MAIN:
 ;-----------------------------------------------------------
 USART_RECV:
 		push	mpr
-		push	lit
 		lds		mpr, UDR1
 
 		cpi		rFlag, 1
@@ -142,7 +167,6 @@ USART_RECV:
 END_RECV_ADDR:
 		ldi		rFlag, 0
 		rjmp	END
-
 
 CHECK_HALT:
 		rol		mpr
@@ -183,9 +207,103 @@ CHECK_LEFT:
 		rjmp	END
 
 END:
-		pop		lit
 		pop		mpr
 		ret
+
+;-----------------------------------------------------------
+; Func: RWHISKER
+; Desc: When the right whisker is hit, moves the bot back, turns left
+;-----------------------------------------------------------
+RWHISKER:							; Begin a function with a label
+
+		; Save variable by pushing them to the stack
+		push	mpr			; Save mpr
+		in		mpr, SREG
+		push	mpr			; Save the status register
+
+		; Back up
+		ldi		mpr, MovBck
+		out		PORTB, mpr	; Move the bot backwards
+		rcall	Wait		; Call wait function
+
+		; Turn left
+		ldi		mpr, TurnL
+		out		PORTB, mpr	; Turn bot left
+		rcall	Wait		; Call wait function
+
+		; Clear queue
+		ldi		mpr, $03
+		out		EIFR, mpr	; Clear the interrupt flags
+
+		out		PORTB, lit
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		mpr
+		out		SREG, mpr	; Restore status register
+		pop		mpr			; Restore mpr
+
+		ret						; End a function with RET
+
+;-----------------------------------------------------------
+; Func: LWHISKER
+; Desc: When the left whisker is hit, moves the bot back, turns right
+;-----------------------------------------------------------
+LWHISKER:							; Begin a function with a label
+
+		; Save variable by pushing them to the stack
+		push	mpr			; Save mpr
+		in		mpr, SREG
+		push	mpr			; Save the status register
+
+		; Back up
+		ldi		mpr, MovBck
+		out		PORTB, mpr	; Move the bot backwards
+		rcall	Wait		; Call wait function
+
+		; Turn right
+		ldi		mpr, TurnR
+		out		PORTB, mpr	; Turn bot left
+		rcall	Wait		; Call wait function
+
+		; Clear queue
+		ldi		mpr, $03
+		out		EIFR, mpr	; Clear the interrupt flags
+
+		out		PORTB, lit
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		mpr
+		out		SREG, mpr	; Restore status register
+		pop		mpr			; Restore mpr
+
+		ret						; End a function with RET
+
+;----------------------------------------------------------------
+; Sub:	Wait
+; Desc:	A wait loop that is 16 + 159975*waitcnt cycles or roughly 
+;		waitcnt*10ms.  Just initialize wait for the specific amount 
+;		of time in 10ms intervals. Here is the general eqaution
+;		for the number of clock cycles in the wait loop:
+;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
+;----------------------------------------------------------------
+Wait:
+		push	waitcnt			; Save wait register
+		push	ilcnt			; Save ilcnt register
+		push	olcnt			; Save olcnt register
+
+Loop:	ldi		olcnt, 224		; load olcnt register
+OLoop:	ldi		ilcnt, 237		; load ilcnt register
+ILoop:	dec		ilcnt			; decrement ilcnt
+		brne	ILoop			; Continue Inner Loop
+		dec		olcnt		; decrement olcnt
+		brne	OLoop			; Continue Outer Loop
+		dec		waitcnt		; Decrement wait 
+		brne	Loop			; Continue Wait loop	
+
+		pop		olcnt		; Restore olcnt register
+		pop		ilcnt		; Restore ilcnt register
+		pop		waitcnt		; Restore wait register
+		ret				; Return from subroutine
 
 ;***********************************************************
 ;*	Stored Program Data

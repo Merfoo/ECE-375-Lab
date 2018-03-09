@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 13:00:40 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 13:31:40 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
@@ -1291,6 +1291,12 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  .def	lit = r17				; Register for light
                                  .def	rFlag = r18				; Flag for address recieved
                                  
+                                 .def	waitcnt = r19			; Register for wait time
+                                 .def	ilcnt = r20				; Inner loop register for wait function
+                                 .def	olcnt = r21				; Outer loop register for wait function
+                                 
+                                 .equ	WTime = 100;			; Wait time for moving
+                                 
                                  .equ	WskrR = 0				; Right Whisker Input Bit
                                  .equ	WskrL = 1				; Left Whisker Input Bit
                                  .equ	EngEnR = 4				; Right Engine Enable Bit
@@ -1321,11 +1327,19 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 000000 c045                      		rjmp 	INIT			; Reset interrupt
                                  
                                  ;Should have Interrupt vectors for:
-                                 ;- Left whisker
                                  ;- Right whisker
+                                 .org	$0002
+000002 d08f                      		rcall	RWhisker		; Call right whisker
+000003 9518                      		reti
+                                 
+                                 ;- Left whisker
+                                 .org	$0004
+000004 d09d                      		rcall	LWhisker		; Call left whisker
+000005 9518                      		reti
+                                 
                                  ;- USART receive
                                  .org	$003C
-00003c d026                      		rcall	USART_RECV
+00003c d02d                      		rcall	USART_RECV
 00003d 9518                      		reti
                                  
                                  .org	$0046					; End of Interrupt Vectors
@@ -1372,21 +1386,33 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 00005c 9300 0098                 		sts		UBRR1H, mpr
 00005e e400                      		ldi		mpr, $40
 00005f 9300 0099                 		sts		UBRR1L, mpr
+                                 
                                  		; From transmit file
                                  
                                  		;External Interrupts
-                                 		;Set the External Interrupt Mask
                                  		;Set the Interrupt Sense Control to falling edge detection
-000061 9478                      		sei
+000061 e00a                      		ldi		mpr, 0b00001010
+000062 9300 006a                 		sts		EICRA, mpr			; Set port 0 and 1 to falling edge
                                  
-                                 	;Other
+                                 		; Configure the External Interrupt Mask
+000064 e003                      		ldi		mpr, (1 << WskrL | 1 << WskrR)
+000065 bf09                      		out		EIMSK, mpr			; Enable port 0 and 1 for interrupts
+                                 		
+                                 		; Enable interrupts globally
+000066 9478                      		sei
+                                 
+                                 		; Init waitcnt to 1 sec
+000067 e634                      		ldi		waitcnt, WTime
+                                 
+                                 		; Init lit
+000068 e010                      		ldi		lit, 0
                                  
                                  ;***********************************************************
                                  ;*	Main Program
                                  ;***********************************************************
                                  MAIN:
                                  	;TODO: ???
-000062 cfff                      		rjmp	MAIN
+000069 cfff                      		rjmp	MAIN
                                  
                                  ;***********************************************************
                                  ;*	Functions and Subroutines
@@ -1397,64 +1423,156 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; Desc: Moves the TekBot USART recv
                                  ;-----------------------------------------------------------
                                  USART_RECV:
-000063 930f                      		push	mpr
-000064 931f                      		push	lit
-000065 9100 009c                 		lds		mpr, UDR1
+00006a 930f                      		push	mpr
+00006b 9100 009c                 		lds		mpr, UDR1
                                  
-000067 3021                      		cpi		rFlag, 1
-000068 f031                      		breq	CHECK_HALT
+00006d 3021                      		cpi		rFlag, 1
+00006e f031                      		breq	CHECK_HALT
                                  
-000069 320a                      		cpi		mpr, BotAddress
-00006a f411                      		brne	END_RECV_ADDR
-00006b e021                      		ldi		rFlag, 1
-00006c c01d                      		rjmp	END
+00006f 320a                      		cpi		mpr, BotAddress
+000070 f411                      		brne	END_RECV_ADDR
+000071 e021                      		ldi		rFlag, 1
+000072 c01d                      		rjmp	END
                                  END_RECV_ADDR:
-00006d e020                      		ldi		rFlag, 0
-00006e c01b                      		rjmp	END
-                                 
+000073 e020                      		ldi		rFlag, 0
+000074 c01b                      		rjmp	END
                                  
                                  CHECK_HALT:
-00006f 1f00                      		rol		mpr
-000070 e020                      		ldi		rFlag, 0
+000075 1f00                      		rol		mpr
+000076 e020                      		ldi		rFlag, 0
                                  
-000071 3900                      		cpi		mpr, Halt
-000072 f419                      		brne	CHECK_BCK
-000073 e910                      		ldi		lit, Halt
-000074 bb18                      		out		PORTB, lit
-000075 c014                      		rjmp	END
+000077 3900                      		cpi		mpr, Halt
+000078 f419                      		brne	CHECK_BCK
+000079 e910                      		ldi		lit, Halt
+00007a bb18                      		out		PORTB, lit
+00007b c014                      		rjmp	END
                                  
                                  CHECK_BCK:
-000076 3000                      		cpi		mpr, MovBck
-000077 f419                      		brne	CHECK_FWD
-000078 e010                      		ldi		lit, MovBck
-000079 bb18                      		out		PORTB, lit
-00007a c00f                      		rjmp	END
+00007c 3000                      		cpi		mpr, MovBck
+00007d f419                      		brne	CHECK_FWD
+00007e e010                      		ldi		lit, MovBck
+00007f bb18                      		out		PORTB, lit
+000080 c00f                      		rjmp	END
                                  
                                  CHECK_FWD:
-00007b 3600                      		cpi		mpr, MovFwd
-00007c f419                      		brne	CHECK_RIGHT
-00007d e610                      		ldi		lit, MovFwd
-00007e bb18                      		out		PORTB, lit
-00007f c00a                      		rjmp	END
+000081 3600                      		cpi		mpr, MovFwd
+000082 f419                      		brne	CHECK_RIGHT
+000083 e610                      		ldi		lit, MovFwd
+000084 bb18                      		out		PORTB, lit
+000085 c00a                      		rjmp	END
                                  
                                  CHECK_RIGHT:
-000080 3400                      		cpi		mpr, TurnR
-000081 f419                      		brne	CHECK_LEFT
-000082 e410                      		ldi		lit, TurnR
-000083 bb18                      		out		PORTB, lit
-000084 c005                      		rjmp	END
+000086 3400                      		cpi		mpr, TurnR
+000087 f419                      		brne	CHECK_LEFT
+000088 e410                      		ldi		lit, TurnR
+000089 bb18                      		out		PORTB, lit
+00008a c005                      		rjmp	END
                                  
                                  CHECK_LEFT:
-000085 3200                      		cpi		mpr, TurnL
-000086 f419                      		brne	END
-000087 e210                      		ldi		lit, TurnL
-000088 bb18                      		out		PORTB, lit
-000089 c000                      		rjmp	END
+00008b 3200                      		cpi		mpr, TurnL
+00008c f419                      		brne	END
+00008d e210                      		ldi		lit, TurnL
+00008e bb18                      		out		PORTB, lit
+00008f c000                      		rjmp	END
                                  
                                  END:
-00008a 911f                      		pop		lit
-00008b 910f                      		pop		mpr
-00008c 9508                      		ret
+000090 910f                      		pop		mpr
+000091 9508                      		ret
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: RWHISKER
+                                 ; Desc: When the right whisker is hit, moves the bot back, turns left
+                                 ;-----------------------------------------------------------
+                                 RWHISKER:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+000092 930f                      		push	mpr			; Save mpr
+000093 b70f                      		in		mpr, SREG
+000094 930f                      		push	mpr			; Save the status register
+                                 
+                                 		; Back up
+000095 e000                      		ldi		mpr, MovBck
+000096 bb08                      		out		PORTB, mpr	; Move the bot backwards
+000097 d01a                      		rcall	Wait		; Call wait function
+                                 
+                                 		; Turn left
+000098 e200                      		ldi		mpr, TurnL
+000099 bb08                      		out		PORTB, mpr	; Turn bot left
+00009a d017                      		rcall	Wait		; Call wait function
+                                 
+                                 		; Clear queue
+00009b e003                      		ldi		mpr, $03
+00009c bf08                      		out		EIFR, mpr	; Clear the interrupt flags
+                                 
+00009d bb18                      		out		PORTB, lit
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+00009e 910f                      		pop		mpr
+00009f bf0f                      		out		SREG, mpr	; Restore status register
+0000a0 910f                      		pop		mpr			; Restore mpr
+                                 
+0000a1 9508                      		ret						; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: LWHISKER
+                                 ; Desc: When the left whisker is hit, moves the bot back, turns right
+                                 ;-----------------------------------------------------------
+                                 LWHISKER:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+0000a2 930f                      		push	mpr			; Save mpr
+0000a3 b70f                      		in		mpr, SREG
+0000a4 930f                      		push	mpr			; Save the status register
+                                 
+                                 		; Back up
+0000a5 e000                      		ldi		mpr, MovBck
+0000a6 bb08                      		out		PORTB, mpr	; Move the bot backwards
+0000a7 d00a                      		rcall	Wait		; Call wait function
+                                 
+                                 		; Turn right
+0000a8 e400                      		ldi		mpr, TurnR
+0000a9 bb08                      		out		PORTB, mpr	; Turn bot left
+0000aa d007                      		rcall	Wait		; Call wait function
+                                 
+                                 		; Clear queue
+0000ab e003                      		ldi		mpr, $03
+0000ac bf08                      		out		EIFR, mpr	; Clear the interrupt flags
+                                 
+0000ad bb18                      		out		PORTB, lit
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+0000ae 910f                      		pop		mpr
+0000af bf0f                      		out		SREG, mpr	; Restore status register
+0000b0 910f                      		pop		mpr			; Restore mpr
+                                 
+0000b1 9508                      		ret						; End a function with RET
+                                 
+                                 ;----------------------------------------------------------------
+                                 ; Sub:	Wait
+                                 ; Desc:	A wait loop that is 16 + 159975*waitcnt cycles or roughly 
+                                 ;		waitcnt*10ms.  Just initialize wait for the specific amount 
+                                 ;		of time in 10ms intervals. Here is the general eqaution
+                                 ;		for the number of clock cycles in the wait loop:
+                                 ;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
+                                 ;----------------------------------------------------------------
+                                 Wait:
+0000b2 933f                      		push	waitcnt			; Save wait register
+0000b3 934f                      		push	ilcnt			; Save ilcnt register
+0000b4 935f                      		push	olcnt			; Save olcnt register
+                                 
+0000b5 ee50                      Loop:	ldi		olcnt, 224		; load olcnt register
+0000b6 ee4d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
+0000b7 954a                      ILoop:	dec		ilcnt			; decrement ilcnt
+0000b8 f7f1                      		brne	ILoop			; Continue Inner Loop
+0000b9 955a                      		dec		olcnt		; decrement olcnt
+0000ba f7d9                      		brne	OLoop			; Continue Outer Loop
+0000bb 953a                      		dec		waitcnt		; Decrement wait 
+0000bc f7c1                      		brne	Loop			; Continue Wait loop	
+                                 
+0000bd 915f                      		pop		olcnt		; Restore olcnt register
+0000be 914f                      		pop		ilcnt		; Restore ilcnt register
+0000bf 913f                      		pop		waitcnt		; Restore wait register
+0000c0 9508                      		ret				; Return from subroutine
                                  
                                  ;***********************************************************
                                  ;*	Stored Program Data
@@ -1482,38 +1600,38 @@ counted separately from r26..r31 here.
 "ATmega128" register use summary:
 x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  32 r17:  12 r18:   4 r19:   0 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
+r13:   0 r14:   0 r15:   0 r16:  60 r17:  13 r18:   4 r19:   4 r20:   4 
+r21:   4 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
 r29:   0 r30:   0 r31:   0 
-Registers used: 3 out of 35 (8.6%)
+Registers used: 6 out of 35 (17.1%)
 
 "ATmega128" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
 brcc  :   0 brcs  :   0 break :   0 breq  :   1 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :   6 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brne  :   9 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   7 cpse  :   0 dec   :   0 elpm  :   0 eor   :   0 fmul  :   0 
-fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   0 
-jmp   :   0 ld    :   0 ldd   :   0 ldi   :  19 lds   :   1 lpm   :   0 
+cpi   :   7 cpse  :   0 dec   :   3 elpm  :   0 eor   :   0 fmul  :   0 
+fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   0 
+jmp   :   0 ld    :   0 ldd   :   0 ldi   :  31 lds   :   1 lpm   :   0 
 lsl   :   0 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 
-mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  11 
-pop   :   2 push  :   2 rcall :   1 ret   :   1 reti  :   1 rjmp  :   9 
+mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  22 
+pop   :   8 push  :   8 rcall :   7 ret   :   4 reti  :   3 rjmp  :   9 
 rol   :   1 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
 sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
 seh   :   0 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 
 sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 
-sts   :   5 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
+sts   :   6 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
 
-Instructions used: 15 out of 114 (13.2%)
+Instructions used: 17 out of 114 (14.9%)
 
 "ATmega128" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x00011a    148      0    148  131072   0.1%
+[.cseg] 0x000000 0x000182    260      0    260  131072   0.2%
 [.dseg] 0x000100 0x000100      0      0      0    4096   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    4096   0.0%
 
