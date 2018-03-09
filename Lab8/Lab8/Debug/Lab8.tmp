@@ -1,18 +1,18 @@
 <ASSEMBLER_INFO>
  <VERSION>2.2.7</VERSION>
  <DEVICE>"ATmega128"</DEVICE>
- <WORKING_DIR>C:\Users\Fauzi\Desktop\Lab8\Lab8\Debug</WORKING_DIR>
+ <WORKING_DIR>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\Debug</WORKING_DIR>
  <INCLUDE_PATH>
   <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
   <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
   <DIR></DIR>
  </INCLUDE_PATH>
- <SOURCE_FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</SOURCE_FILE>
+ <SOURCE_FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</SOURCE_FILE>
  <INCLUDED_FILES>
   <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc</FILE>
  </INCLUDED_FILES>
  <OBJECT_FILES>
-  <FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\Debug\Lab8.obj</FILE>
+  <FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\Debug\Lab8.obj</FILE>
  </OBJECT_FILES>
  <HEX_FILES>
   <FILE>Lab8.hex</FILE>
@@ -22,15 +22,15 @@
   <FILE>Lab8.lss</FILE>
  </OUTPUT_FILES>
  <LABELS>
-  <INIT><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>67</LINE></INIT>
-  <USART_RECV><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>130</LINE></USART_RECV>
-  <MAIN><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>118</LINE></MAIN>
-  <CHECK_HALT><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>147</LINE></CHECK_HALT>
-  <END_RECV_ADDR><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>142</LINE></END_RECV_ADDR>
-  <END><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>185</LINE></END>
-  <CHECK_BCK><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>157</LINE></CHECK_BCK>
-  <CHECK_FWD><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>164</LINE></CHECK_FWD>
-  <CHECK_RIGHT><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>171</LINE></CHECK_RIGHT>
-  <CHECK_LEFT><FILE>C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm</FILE><LINE>178</LINE></CHECK_LEFT>
+  <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>67</LINE></INIT>
+  <USART_RECV><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>130</LINE></USART_RECV>
+  <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>118</LINE></MAIN>
+  <CHECK_HALT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>147</LINE></CHECK_HALT>
+  <END_RECV_ADDR><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>142</LINE></END_RECV_ADDR>
+  <END><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>185</LINE></END>
+  <CHECK_BCK><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>157</LINE></CHECK_BCK>
+  <CHECK_FWD><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>164</LINE></CHECK_FWD>
+  <CHECK_RIGHT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>171</LINE></CHECK_RIGHT>
+  <CHECK_LEFT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>178</LINE></CHECK_LEFT>
  </LABELS>
 </ASSEMBLER_INFO>

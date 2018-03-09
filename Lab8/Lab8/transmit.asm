@@ -108,41 +108,40 @@ MAIN:
 		ldi		buf, Halt
 		rcall	SEND_BUF
 
-		ldi		mpr, Halt
-		out		PORTB, mpr
-
+		out		PORTB, buf
+		rjmp	END
 CHECK_BCK:
 		sbrs	mpr, PD1
 		rjmp	CHECK_FWD
 		ldi		buf, MovBck
 		rcall	SEND_BUF
 
-		ldi		mpr, MovBck
-		out		PORTB, mpr
+		out		PORTB, buf
+		rjmp	END
 CHECK_FWD:
 		sbrs	mpr, PD4
 		rjmp	CHECK_RIGHT
 		ldi		buf, MovFwd
-		call	SEND_BUF
+		rcall	SEND_BUF
 
-		ldi		mpr, MovFwd
-		out		PORTB, mpr
+		out		PORTB, buf
+		rjmp	END
 CHECK_RIGHT:
 		sbrs	mpr, PD5
 		rjmp	CHECK_LEFT
 		ldi		buf, TurnR
-		call	SEND_BUF
+		rcall	SEND_BUF
 
-		ldi		mpr, TurnR
-		out		PORTB, mpr
+		out		PORTB, buf
+		rjmp	END
 CHECK_LEFT:
 		sbrs	mpr, PD6
 		rjmp	END
 		ldi		buf, TurnL
-		call	SEND_BUF
+		rcall	SEND_BUF
 
-		ldi		mpr, TurnL
-		out		PORTB, mpr
+		out		PORTB, buf
+		rjmp	END
 END:
 		rjmp	MAIN
 

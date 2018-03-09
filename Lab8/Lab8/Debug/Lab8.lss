@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm Tue Mar 06 18:38:26 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 13:00:40 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
-C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
+C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
-C:\Users\Fauzi\Desktop\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
+C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
                                  
                                  ;***********************************************************
                                  
