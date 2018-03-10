@@ -1,15 +1,15 @@
 ;***********************************************************
 ;*
-;*	Enter Name of file here
+;*	receive.asm
 ;*
-;*	Enter the description of the program here
+;*	Receives data from another TekBot
 ;*
 ;*	This is the RECEIVE skeleton file for Lab 8 of ECE 375
 ;*
 ;***********************************************************
 ;*
-;*	 Author: Enter your name
-;*	   Date: Enter Date
+;*	 Author: Fauzi Kliman and Aidan Carson
+;*	   Date: 2/27/2018
 ;*
 ;***********************************************************
 
@@ -46,8 +46,8 @@
 .equ	TurnR =   (1<<EngDirL)				;0b01000000 Turn Right Action Code
 .equ	TurnL =   (1<<EngDirR)				;0b00100000 Turn Left Action Code
 .equ	Halt =    (1<<EngEnR|1<<EngEnL)		;0b10010000 Halt Action Code
-.equ	FreezeTx =   $F8	; Freeze signal from transmiter
-.equ	FreezeRx =   $55	; Freeze signal receiver sends
+.equ	FreezeTx =   $F8					; Freeze signal from transmiter
+.equ	FreezeRx =   $55					; Freeze signal receiver sends
 
 ;***********************************************************
 ;*	Start of Code Segment
@@ -73,7 +73,7 @@
 
 ;- USART receive
 .org	$003C
-		rcall	USART_RECV
+		rcall	USART_RECV		; Call usart receive
 		reti
 
 .org	$0046					; End of Interrupt Vectors
@@ -138,7 +138,7 @@ INIT:
 		; Init waitcnt to 1 sec
 		ldi		waitcnt, WTime
 
-		; Init lit
+		; Init lit to 0
 		ldi		lit, 0
 
 		; Init received to 0
@@ -151,7 +151,6 @@ INIT:
 ;*	Main Program
 ;***********************************************************
 MAIN:
-	;TODO: ???
 		rjmp	MAIN
 
 ;***********************************************************
@@ -163,38 +162,67 @@ MAIN:
 ; Desc: Moves the TekBot USART recv
 ;-----------------------------------------------------------
 USART_RECV:
+
+		; Save mpr to stack
 		push	mpr
+
+		; Load received usart data to mpr
 		lds		mpr, UDR1
 
+		; Check if command is freeze sent from other receiver bots
 		cpi		mpr, FreezeRx
+
+		; Otherwise jump to check if received data is a bot address or command
 		brne	CHECK_RECEIVED
+
+		; Freeze the bot and jump to end of function
 		rcall	FREEZE_BOT
 		rjmp	END
 
 CHECK_RECEIVED:
+
+		; Check if a bot address was already received
 		cpi		received, 1
+
+		; Process received data as an action code
 		breq	ACTION_CODE
 
+		; Check if received data matches this bots address
 		cpi		mpr, BotAddress
+
+		; Jump to end of function if doesn't match
 		brne	END
+
+		; Set flag for matching bot address to 1 and jump to end of function
 		ldi		received, 1
 		rjmp	END
 
 ACTION_CODE:
+
+		; Set matching bot address flag to 0
 		ldi		received, 0
 
+		; Check if action code is freeze
 		cpi		mpr, FreezeTx
+
+		; Process action code as non-freeze
 		brne	NON_FREEZE
+
+		; Send freeze code to other receive bots and jump to end of function
 		rcall	SEND_FREEZE
 		jmp		END
 
 NON_FREEZE:
+
+		; Shift action code left 1 bit and output result to the LEDs
 		lsl		mpr
 		mov		lit, mpr
 		out		PORTB, lit
 		rjmp	END
 
 END:
+
+		; Restore mpr from stack
 		pop		mpr
 		ret
 
@@ -298,16 +326,29 @@ ILoop:	dec		ilcnt			; decrement ilcnt
 ; Desc: Sends the freeze signal to other botsss
 ;-----------------------------------------------------------
 SEND_FREEZE:
+
+		; Save mpr to stack
 		push	mpr
 
+		; Disable interrupts globally
 		cli
+
 SEND_DATA:
+
+		; Check if the empty flag is set for usart
 		lds		mpr, UCSR1A
+		
+		; Skip next instruction if usart empty flag is set
 		sbrs	mpr, UDRE1
+
+		; Loop if the flag is not set i.e. not empty
 		rjmp	SEND_DATA
+
+		; Load freeze code to usart for transmission
 		ldi		mpr, FreezeRx
 		sts		UDR1, mpr
 		
+		; Wait for a second so that this bot ignores the freeze code it just sent
 		rcall	Wait
 
 		; Clear USART interrupts
@@ -315,8 +356,10 @@ SEND_DATA:
 		ori		mpr, 0b11100000
 		sts		UCSR1A, mpr
 
+		; Enable interrupts globally
 		sei
 
+		; Restore mpr from stack
 		pop		mpr
 		ret
 
@@ -325,13 +368,15 @@ SEND_DATA:
 ; Desc: Freezes the bot
 ;-----------------------------------------------------------
 FREEZE_BOT:
+
+		; Save mpr to stack
 		push	mpr
 
-		; Halt bot
+		; Output halt code to LEDs
 		ldi		mpr, Halt
 		out		PORTB, mpr
 
-		; Disable global interrupts
+		; Disable interrupts globally
 		cli
 
 		; Incremement times frozen by 1
@@ -348,7 +393,7 @@ FREEZE_BOT:
 		rcall	Wait
 		rcall	Wait
 
-		; Clear external interrupts
+		; Clear all external interrupts
 		ldi		mpr, $FF
 		out		EIFR, mpr
 		
@@ -357,20 +402,14 @@ FREEZE_BOT:
 		ori		mpr, 0b11100000
 		sts		UCSR1A, mpr		
 
-		; Enable global interrupts
+		; Enable interrupts globally
 		sei
 
 		; Resume what it was doing before freeze
 		out		PORTB, lit
 
 END_FREEZE:
+
+		; Restore mpr from stack
 		pop		mpr
 		ret
-
-;***********************************************************
-;*	Stored Program Data
-;***********************************************************
-
-;***********************************************************
-;*	Additional Program Includes
-;***********************************************************
