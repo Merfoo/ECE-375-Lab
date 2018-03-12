@@ -69,6 +69,9 @@
     <Compile Include="receive.asm">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="receiveChallenge.asm">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="transmit.asm">
       <SubType>Code</SubType>
     </Compile>

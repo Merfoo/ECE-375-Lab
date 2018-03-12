@@ -23,21 +23,21 @@
  </OUTPUT_FILES>
  <LABELS>
   <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>84</LINE></INIT>
-  <RWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>205</LINE></RWhisker>
-  <LWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>239</LINE></LWhisker>
-  <USART_RECV><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>165</LINE></USART_RECV>
+  <RWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>233</LINE></RWhisker>
+  <LWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>267</LINE></LWhisker>
+  <USART_RECV><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>164</LINE></USART_RECV>
   <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>153</LINE></MAIN>
-  <CHECK_RECEIVED><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>174</LINE></CHECK_RECEIVED>
-  <FREEZE_BOT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>327</LINE></FREEZE_BOT>
-  <END><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>197</LINE></END>
-  <ACTION_CODE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>183</LINE></ACTION_CODE>
-  <NON_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>191</LINE></NON_FREEZE>
-  <SEND_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>300</LINE></SEND_FREEZE>
-  <Wait><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>277</LINE></Wait>
-  <Loop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>282</LINE></Loop>
-  <OLoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>283</LINE></OLoop>
-  <ILoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>284</LINE></ILoop>
-  <SEND_DATA><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>304</LINE></SEND_DATA>
-  <END_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>366</LINE></END_FREEZE>
+  <CHECK_RECEIVED><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>182</LINE></CHECK_RECEIVED>
+  <FREEZE_BOT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>370</LINE></FREEZE_BOT>
+  <END><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>223</LINE></END>
+  <ACTION_CODE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>200</LINE></ACTION_CODE>
+  <NON_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>215</LINE></NON_FREEZE>
+  <SEND_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>328</LINE></SEND_FREEZE>
+  <Wait><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>305</LINE></Wait>
+  <Loop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>310</LINE></Loop>
+  <OLoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>311</LINE></OLoop>
+  <ILoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>312</LINE></ILoop>
+  <SEND_DATA><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>336</LINE></SEND_DATA>
+  <END_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm</FILE><LINE>411</LINE></END_FREEZE>
  </LABELS>
 </ASSEMBLER_INFO>

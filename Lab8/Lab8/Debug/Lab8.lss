@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Fri Mar 09 15:36:33 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm Mon Mar 12 15:58:13 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
@@ -1226,16 +1226,16 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; ***** END OF FILE ******************************************************
                                  
                                  ;*
-                                 ;*	Enter Name of file here
+                                 ;*	receive.asm
                                  ;*
-                                 ;*	Enter the description of the program here
+                                 ;*	Receives data from another TekBot
                                  ;*
                                  ;*	This is the RECEIVE skeleton file for Lab 8 of ECE 375
                                  ;*
                                  ;***********************************************************
                                  ;*
-                                 ;*	 Author: Enter your name
-                                 ;*	   Date: Enter Date
+                                 ;*	 Author: Fauzi Kliman and Aidan Carson
+                                 ;*	   Date: 2/27/2018
                                  ;*
                                  ;***********************************************************
                                  
@@ -1315,8 +1315,8 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  .equ	TurnR =   (1<<EngDirL)				;0b01000000 Turn Right Action Code
                                  .equ	TurnL =   (1<<EngDirR)				;0b00100000 Turn Left Action Code
                                  .equ	Halt =    (1<<EngEnR|1<<EngEnL)		;0b10010000 Halt Action Code
-                                 .equ	FreezeTx =   $F8	; Freeze signal from transmiter
-                                 .equ	FreezeRx =   $55	; Freeze signal receiver sends
+                                 .equ	FreezeTx =   $F8					; Freeze signal from transmiter
+                                 .equ	FreezeRx =   $55					; Freeze signal receiver sends
                                  
                                  ;***********************************************************
                                  ;*	Start of Code Segment
@@ -1342,7 +1342,7 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  
                                  ;- USART receive
                                  .org	$003C
-00003c d02f                      		rcall	USART_RECV
+00003c d02f                      		rcall	USART_RECV		; Call usart receive
 00003d 9518                      		reti
                                  
                                  .org	$0046					; End of Interrupt Vectors
@@ -1407,7 +1407,7 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  		; Init waitcnt to 1 sec
 000067 e634                      		ldi		waitcnt, WTime
                                  
-                                 		; Init lit
+                                 		; Init lit to 0
 000068 e010                      		ldi		lit, 0
                                  
                                  		; Init received to 0
@@ -1420,7 +1420,6 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ;*	Main Program
                                  ;***********************************************************
                                  MAIN:
-                                 	;TODO: ???
 00006b cfff                      		rjmp	MAIN
                                  
                                  ;***********************************************************
@@ -1432,38 +1431,67 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; Desc: Moves the TekBot USART recv
                                  ;-----------------------------------------------------------
                                  USART_RECV:
+                                 
+                                 		; Save mpr to stack
 00006c 930f                      		push	mpr
+                                 
+                                 		; Load received usart data to mpr
 00006d 9100 009c                 		lds		mpr, UDR1
                                  
+                                 		; Check if command is freeze sent from other receiver bots
 00006f 3505                      		cpi		mpr, FreezeRx
+                                 
+                                 		; Otherwise jump to check if received data is a bot address or command
 000070 f411                      		brne	CHECK_RECEIVED
+                                 
+                                 		; Freeze the bot and jump to end of function
 000071 d054                      		rcall	FREEZE_BOT
 000072 c010                      		rjmp	END
                                  
                                  CHECK_RECEIVED:
+                                 
+                                 		; Check if a bot address was already received
 000073 3021                      		cpi		received, 1
+                                 
+                                 		; Process received data as an action code
 000074 f021                      		breq	ACTION_CODE
                                  
+                                 		; Check if received data matches this bots address
 000075 320a                      		cpi		mpr, BotAddress
+                                 
+                                 		; Jump to end of function if doesn't match
 000076 f461                      		brne	END
+                                 
+                                 		; Set flag for matching bot address to 1 and jump to end of function
 000077 e021                      		ldi		received, 1
 000078 c00a                      		rjmp	END
                                  
                                  ACTION_CODE:
+                                 
+                                 		; Set matching bot address flag to 0
 000079 e020                      		ldi		received, 0
                                  
+                                 		; Check if action code is freeze
 00007a 3f08                      		cpi		mpr, FreezeTx
+                                 
+                                 		; Process action code as non-freeze
 00007b f419                      		brne	NON_FREEZE
+                                 
+                                 		; Send freeze code to other receive bots and jump to end of function
 00007c d037                      		rcall	SEND_FREEZE
 00007d 940c 0083                 		jmp		END
                                  
                                  NON_FREEZE:
+                                 
+                                 		; Shift action code left 1 bit and output result to the LEDs
 00007f 0f00                      		lsl		mpr
 000080 2f10                      		mov		lit, mpr
 000081 bb18                      		out		PORTB, lit
 000082 c000                      		rjmp	END
                                  
                                  END:
+                                 
+                                 		; Restore mpr from stack
 000083 910f                      		pop		mpr
 000084 9508                      		ret
                                  
@@ -1567,16 +1595,29 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; Desc: Sends the freeze signal to other botsss
                                  ;-----------------------------------------------------------
                                  SEND_FREEZE:
+                                 
+                                 		; Save mpr to stack
 0000b4 930f                      		push	mpr
                                  
+                                 		; Disable interrupts globally
 0000b5 94f8                      		cli
+                                 
                                  SEND_DATA:
+                                 
+                                 		; Check if the empty flag is set for usart
 0000b6 9100 009b                 		lds		mpr, UCSR1A
+                                 		
+                                 		; Skip next instruction if usart empty flag is set
 0000b8 ff05                      		sbrs	mpr, UDRE1
+                                 
+                                 		; Loop if the flag is not set i.e. not empty
 0000b9 cffc                      		rjmp	SEND_DATA
+                                 
+                                 		; Load freeze code to usart for transmission
 0000ba e505                      		ldi		mpr, FreezeRx
 0000bb 9300 009c                 		sts		UDR1, mpr
                                  		
+                                 		; Wait for a second so that this bot ignores the freeze code it just sent
 0000bd dfe7                      		rcall	Wait
                                  
                                  		; Clear USART interrupts
@@ -1584,8 +1625,10 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 0000c0 6e00                      		ori		mpr, 0b11100000
 0000c1 9300 009b                 		sts		UCSR1A, mpr
                                  
+                                 		; Enable interrupts globally
 0000c3 9478                      		sei
                                  
+                                 		; Restore mpr from stack
 0000c4 910f                      		pop		mpr
 0000c5 9508                      		ret
                                  
@@ -1594,13 +1637,15 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
                                  ; Desc: Freezes the bot
                                  ;-----------------------------------------------------------
                                  FREEZE_BOT:
+                                 
+                                 		; Save mpr to stack
 0000c6 930f                      		push	mpr
                                  
-                                 		; Halt bot
+                                 		; Output halt code to LEDs
 0000c7 e900                      		ldi		mpr, Halt
 0000c8 bb08                      		out		PORTB, mpr
                                  
-                                 		; Disable global interrupts
+                                 		; Disable interrupts globally
 0000c9 94f8                      		cli
                                  
                                  		; Incremement times frozen by 1
@@ -1617,7 +1662,7 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 0000d0 dfd4                      		rcall	Wait
 0000d1 dfd3                      		rcall	Wait
                                  
-                                 		; Clear external interrupts
+                                 		; Clear all external interrupts
 0000d2 ef0f                      		ldi		mpr, $FF
 0000d3 bf08                      		out		EIFR, mpr
                                  		
@@ -1626,23 +1671,17 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receive.asm(16): Including
 0000d6 6e00                      		ori		mpr, 0b11100000
 0000d7 9300 009b                 		sts		UCSR1A, mpr		
                                  
-                                 		; Enable global interrupts
+                                 		; Enable interrupts globally
 0000d9 9478                      		sei
                                  
                                  		; Resume what it was doing before freeze
 0000da bb18                      		out		PORTB, lit
                                  
                                  END_FREEZE:
+                                 
+                                 		; Restore mpr from stack
 0000db 910f                      		pop		mpr
 0000dc 9508                      		ret
-                                 
-                                 ;***********************************************************
-                                 ;*	Stored Program Data
-                                 ;***********************************************************
-                                 
-                                 ;***********************************************************
-                                 ;*	Additional Program Includes
-                                 ;***********************************************************
 
 
 RESOURCE USE INFORMATION
