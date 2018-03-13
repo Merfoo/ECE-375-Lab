@@ -79,7 +79,7 @@
 
 ;- Timer 1 normal overflow hahahaHA
 .org	$001C
-		rcall	JIMMY
+		rcall	CLK_INT
 		reti
 
 ;- USART receive
@@ -432,10 +432,10 @@ END_FREEZE:
 		ret
 
 ;-----------------------------------------------------------
-; Func: JIMMY
-; Desc: Rustles Jimmies
+; Func: CLK_INT
+; Desc: Interrupt function for timer/counter 1
 ;-----------------------------------------------------------
-JIMMY:							; Begin a function with a label
+CLK_INT:							; Begin a function with a label
 
 		; Save variable by pushing them to the stack
 		push	mpr			; Save mpr
@@ -443,15 +443,15 @@ JIMMY:							; Begin a function with a label
 		push	mpr			; Save the status register
 
 		
-		cpi		whiskyState, RWhisky
-		breq	JIMMYS_RIGHT_PANT_LEG
+		cpi		whiskyState, RWhiskyState
+		breq	R_WHISKY_STATE
 
-		cpi		whiskyState, LWhisky
-		breq	JIMMYS_LEFTT_PANT_LEG
+		cpi		whiskyState, LWhiskyState
+		breq	L_WHISKY_STATE
 		
-		rjmp	JIMMYS_END_PANT_LEG
+		rjmp	E_WHISKY_STATE
 
-JIMMYS_RIGHT_PANT_LEG:
+R_WHISKY_STATE:
 
 		; Turn left
 		ldi		mpr, TurnL
@@ -461,9 +461,9 @@ JIMMYS_RIGHT_PANT_LEG:
 
 		rcall	INIT_CLK
 
-		rjmp	END_JIMMY
+		rjmp	END_CLK_INT
 
-JIMMYS_LEFTT_PANT_LEG:
+L_WHISKY_STATE:
 		
 		; Turn right
 		ldi		mpr, TurnR
@@ -473,18 +473,18 @@ JIMMYS_LEFTT_PANT_LEG:
 				
 		rcall	INIT_CLK
 
-		rjmp	END_JIMMY
+		rjmp	END_CLK_INT
 
-JIMMYS_END_PANT_LEG:
+E_WHISKY_STATE:
 
 		; Clear queue for buttons
 		ldi		mpr, $FF
 		out		EIFR, mpr	; Clear the interrupt flags
 
 		; Clear	queue for usart receive
-		lds		mpr, UCSRA1
+		lds		mpr, UCSR1A
 		ori		mpr, 0b10000000
-		sts		UCSRA1, mpr
+		sts		UCSR1A, mpr
 
 		; Configure the External Interrupt Mask
 		ldi		mpr, (1 << WskrL | 1 << WskrR)
@@ -501,7 +501,7 @@ JIMMYS_END_PANT_LEG:
 		; Restore the previous lights - IT,S LIT!
 		out		PORTB, lit
 
-END_JIMMY:
+END_CLK_INT:
 
 		; Restore variable by popping them from the stack in reverse order
 		pop		mpr
