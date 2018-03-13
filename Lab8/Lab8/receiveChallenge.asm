@@ -136,7 +136,7 @@ INIT:
 
 		; Setup all the timers
 		; Init speed to 0
-		ldi		speed, 1
+		ldi		speed, 0
 
 		; Configure 8-bit Timer/Counters
 		ldi		mpr, 0b01111001
@@ -251,12 +251,15 @@ NON_FREEZE:
 		cpi		mpr, Halt
 		breq	CALL_SPEED_INC
 
+		; Load halt code to lights ORd with the speed
 		mov		lit, mpr
 		or		lit, speed
 		out		PORTB, lit
 		rjmp	END_USART_RECV
 
 CALL_SPEED_INC:
+
+		; Dec the speed
 		rcall	SET_DEC
 
 END_USART_RECV:
@@ -429,12 +432,15 @@ CLK_INT:							; Begin a function with a label
 		push	mpr			; Save the status register
 
 		
+		; Check if we're in the right whisker hit state
 		cpi		whiskyState, RWhiskyState
 		breq	R_WHISKY_STATE
 
+		; Check if we're in the left whisker hit state
 		cpi		whiskyState, LWhiskyState
 		breq	L_WHISKY_STATE
 		
+		; Otherwise we're in the end whisker state
 		rjmp	E_WHISKY_STATE
 
 R_WHISKY_STATE:
@@ -444,8 +450,10 @@ R_WHISKY_STATE:
 		or		mpr, speed
 		out		PORTB, mpr	; Turn bot left
 
+		; Set whisker state to end
 		ldi		whiskyState, EWhiskyState
 
+		; Setup the 1 sec clock
 		rcall	INIT_CLK
 
 		rjmp	END_CLK_INT
@@ -455,10 +463,12 @@ L_WHISKY_STATE:
 		; Turn right
 		ldi		mpr, TurnR
 		or		mpr, speed
-		out		PORTB, mpr	; Turn bot left
+		out		PORTB, mpr	; Turn bot right
 
+		; Set whisker state to end
 		ldi		whiskyState, EWhiskyState
 				
+		; Setup the 1 sec clock
 		rcall	INIT_CLK
 
 		rjmp	END_CLK_INT
@@ -554,8 +564,12 @@ SKIP_DEC:
 		
 		; Save waitcnt
 		push	waitcnt
+
+		; Wait for 1/2 a sec
 		ldi		waitcnt, SpeedIncTime
 		rcall	Wait
+
+		; Restore waitcnt
 		pop		waitcnt
 
 		; Clear queue
@@ -595,8 +609,12 @@ SKIP_INC:
 
 		; Save waitcnt
 		push	waitcnt
+
+		; Wait for 1/2 a sec
 		ldi		waitcnt, SpeedIncTime
 		rcall	Wait
+
+		; Restore waitcnt
 		pop		waitcnt
 
 		; Clear queue
