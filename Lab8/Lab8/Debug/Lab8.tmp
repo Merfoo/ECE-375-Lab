@@ -7,7 +7,7 @@
   <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
   <DIR></DIR>
  </INCLUDE_PATH>
- <SOURCE_FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</SOURCE_FILE>
+ <SOURCE_FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</SOURCE_FILE>
  <INCLUDED_FILES>
   <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc</FILE>
  </INCLUDED_FILES>
@@ -22,16 +22,32 @@
   <FILE>Lab8.lss</FILE>
  </OUTPUT_FILES>
  <LABELS>
-  <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>56</LINE></INIT>
-  <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>102</LINE></MAIN>
-  <CHECK_BCK><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>123</LINE></CHECK_BCK>
-  <SEND_BUF><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>209</LINE></SEND_BUF>
-  <END><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>198</LINE></END>
-  <CHECK_FWD><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>138</LINE></CHECK_FWD>
-  <CHECK_RIGHT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>153</LINE></CHECK_RIGHT>
-  <CHECK_LEFT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>168</LINE></CHECK_LEFT>
-  <CHECK_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>183</LINE></CHECK_FREEZE>
-  <SEND_ADDR><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>214</LINE></SEND_ADDR>
-  <SEND_DATA><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm</FILE><LINE>228</LINE></SEND_DATA>
+  <INIT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>97</LINE></INIT>
+  <RWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>272</LINE></RWhisker>
+  <LWhisker><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>309</LINE></LWhisker>
+  <CLK_INT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>424</LINE></CLK_INT>
+  <USART_RECV><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>194</LINE></USART_RECV>
+  <MAIN><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>183</LINE></MAIN>
+  <CHECK_RECEIVED><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>212</LINE></CHECK_RECEIVED>
+  <FREEZE_BOT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>373</LINE></FREEZE_BOT>
+  <END_USART_RECV><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>262</LINE></END_USART_RECV>
+  <ACTION_CODE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>230</LINE></ACTION_CODE>
+  <NON_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>245</LINE></NON_FREEZE>
+  <SET_INC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>576</LINE></SET_INC>
+  <CALL_SPEED_INC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>259</LINE></CALL_SPEED_INC>
+  <SET_DEC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>535</LINE></SET_DEC>
+  <INIT_CLK><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>506</LINE></INIT_CLK>
+  <Wait><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>350</LINE></Wait>
+  <Loop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>355</LINE></Loop>
+  <OLoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>356</LINE></OLoop>
+  <ILoop><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>357</LINE></ILoop>
+  <END_FREEZE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>414</LINE></END_FREEZE>
+  <R_WHISKY_STATE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>440</LINE></R_WHISKY_STATE>
+  <L_WHISKY_STATE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>453</LINE></L_WHISKY_STATE>
+  <E_WHISKY_STATE><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>466</LINE></E_WHISKY_STATE>
+  <END_CLK_INT><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>493</LINE></END_CLK_INT>
+  <SKIP_DEC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>553</LINE></SKIP_DEC>
+  <UPD_COMP><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>617</LINE></UPD_COMP>
+  <SKIP_INC><FILE>C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm</FILE><LINE>594</LINE></SKIP_INC>
  </LABELS>
 </ASSEMBLER_INFO>

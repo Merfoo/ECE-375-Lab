@@ -23,12 +23,14 @@
 .def	received = r18			; Flag for address recieved
 .def	numbFrozen = r22		; Number of times bot froxen
 .def	whiskyState	= r23		; State of the whiskys
+.def	speed = r24
 
 .def	waitcnt = r19			; Register for wait time
 .def	ilcnt = r20				; Inner loop register for wait function
 .def	olcnt = r21				; Outer loop register for wait function
 
 .equ	WTime = 100;			; Wait time for moving
+.equ	SpeedIncTime = 50		; Wait time for inc/dec pwm speed
 
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
@@ -132,6 +134,21 @@ INIT:
 		ldi		mpr, $40
 		sts		UBRR1L, mpr
 
+		; Setup all the timers
+		; Init speed to 0
+		ldi		speed, 1
+
+		; Configure 8-bit Timer/Counters
+		ldi		mpr, 0b01111001
+		out		TCCR0, mpr		; Initialize TCCR0 for fast pwm mode with 
+								; Set OC0 on compare match, clear at bottom
+		out		TCCR2, mpr		; Initialize TCCR2 for fast pwm mode with 
+								; Set OC2 on compare match, clear at bottom
+
+		mov		mpr, speed
+		out		OCR0, mpr		; Initialize compare match of Timer/Counter0 to speed
+		out		OCR2, mpr		; Initialize compare match of Timer/Counter0 to speed
+
 		; Enable Overflow interrupt for Timer/Counter1
 		ldi		mpr, (1 << 2)	
 		out		TIMSK, mpr	
@@ -221,17 +238,26 @@ ACTION_CODE:
 		; Process action code as non-freeze
 		brne	NON_FREEZE
 
-		; Send freeze code to other receive bots and jump to end of function
-		rcall	SEND_FREEZE
+		; Call speed dec if its freeze
+		rcall	SET_INC
 		jmp		END_USART_RECV
 
 NON_FREEZE:
 
 		; Shift action code left 1 bit and output result to the LEDs
 		lsl		mpr
+
+		; Check if its Halt code, if so call speed inc
+		cpi		mpr, Halt
+		breq	CALL_SPEED_INC
+
 		mov		lit, mpr
+		or		lit, speed
 		out		PORTB, lit
 		rjmp	END_USART_RECV
+
+CALL_SPEED_INC:
+		rcall	SET_DEC
 
 END_USART_RECV:
 
@@ -260,6 +286,7 @@ RWHISKER:							; Begin a function with a label
 
 		; Back up
 		ldi		mpr, MovBck
+		or		mpr, speed
 		out		PORTB, mpr	; Move the bot backwards
 
 		; Load in the whisky state
@@ -296,6 +323,7 @@ LWHISKER:							; Begin a function with a label
 
 		; Back up
 		ldi		mpr, MovBck
+		or		mpr, speed
 		out		PORTB, mpr	; Move the bot backwards
 
 		; Load in the whisky state
@@ -337,48 +365,6 @@ ILoop:	dec		ilcnt			; decrement ilcnt
 		pop		ilcnt		; Restore ilcnt register
 		pop		waitcnt		; Restore wait register
 		ret				; Return from subroutine
-
-;-----------------------------------------------------------
-; Func: SEND_FREEZE
-; Desc: Sends the freeze signal to other botsss
-;-----------------------------------------------------------
-SEND_FREEZE:
-
-		; Save mpr to stack
-		push	mpr
-
-		; Disable interrupts globally
-		cli
-
-SEND_DATA:
-
-		; Check if the empty flag is set for usart
-		lds		mpr, UCSR1A
-		
-		; Skip next instruction if usart empty flag is set
-		sbrs	mpr, UDRE1
-
-		; Loop if the flag is not set i.e. not empty
-		rjmp	SEND_DATA
-
-		; Load freeze code to usart for transmission
-		ldi		mpr, FreezeRx
-		sts		UDR1, mpr
-		
-		; Wait for a second so that this bot ignores the freeze code it just sent
-		rcall	Wait
-
-		; Clear USART interrupts
-		lds		mpr, UCSR1A
-		ori		mpr, 0b11100000
-		sts		UCSR1A, mpr
-
-		; Enable interrupts globally
-		sei
-
-		; Restore mpr from stack
-		pop		mpr
-		ret
 
 ;-----------------------------------------------------------
 ; Func: FREEZE_BOT
@@ -455,6 +441,7 @@ R_WHISKY_STATE:
 
 		; Turn left
 		ldi		mpr, TurnL
+		or		mpr, speed
 		out		PORTB, mpr	; Turn bot left
 
 		ldi		whiskyState, EWhiskyState
@@ -467,6 +454,7 @@ L_WHISKY_STATE:
 		
 		; Turn right
 		ldi		mpr, TurnR
+		or		mpr, speed
 		out		PORTB, mpr	; Turn bot left
 
 		ldi		whiskyState, EWhiskyState
@@ -499,6 +487,7 @@ E_WHISKY_STATE:
 		out		TCCR1B, mpr
 
 		; Restore the previous lights - IT,S LIT!
+		or		lit, speed
 		out		PORTB, lit
 
 END_CLK_INT:
@@ -536,5 +525,114 @@ INIT_CLK:							; Begin a function with a label
 
 		; Restore variable by popping them from the stack in reverse order
 		pop		mpr			; Restore mpr
+
+		ret						; End a function with RET
+
+;-----------------------------------------------------------
+; Func: SET_DEC
+; Desc: Decrease the speed of the bump bot
+;-----------------------------------------------------------
+SET_DEC:							; Begin a function with a label
+
+		; Save variable by pushing them to the stack
+		push	mpr					; Save mpr 
+		in		mpr, SREG			; Get Status Register
+		push	mpr					; Save Status Register
+
+		cpi		speed, $00			; Compare value of 0 with speed
+		breq	SKIP_DEC			; Branch if equal
+		dec		speed				; Decrement speed
+
+		in		mpr, PORTB			; Get current values of PORTB
+		andi	mpr, $F0			; Clear lower 4 bits of mpr
+		or		mpr, speed			; Logical OR current speed with mpr
+		out		PORTB, mpr			; write value to PORTB
+
+		rcall	UPD_COMP			; Call Update Compare function
+
+SKIP_DEC:							
+		
+		; Save waitcnt
+		push	waitcnt
+		ldi		waitcnt, SpeedIncTime
+		rcall	Wait
+		pop		waitcnt
+
+		; Clear queue
+		ldi		mpr, $0F
+		out		EIFR, mpr			; Clear the interrupt flags
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		mpr					; Pop mpr
+		out		SREG, mpr			; Restore Status Register
+		pop		mpr					; Restore mpr
+
+		ret							; End a function with RET
+
+;-----------------------------------------------------------
+; Func: SET_INC
+; Desc: Increase the speed of the bump bot
+;-----------------------------------------------------------
+SET_INC:							; Begin a function with a label
+
+		; Save variable by pushing them to the stack
+		push	mpr					; Save mpr 
+		in		mpr, SREG			; Get Status Register
+		push	mpr					; Save Status Register
+
+		cpi		speed, $0F			; Compare value of 15 with speed
+		breq	SKIP_INC			; Branch if equal
+		inc		speed				; Increment speed
+
+		in		mpr, PORTB			; Get current values of PORTB
+		andi	mpr, $F0			; Clear lower 4 bits of mpr
+		or		mpr, speed			; Logical OR current speed with mpr
+		out		PORTB, mpr			; write value to PORTB
+
+		rcall	UPD_COMP			; Call Update Compare function
+
+SKIP_INC:
+
+		; Save waitcnt
+		push	waitcnt
+		ldi		waitcnt, SpeedIncTime
+		rcall	Wait
+		pop		waitcnt
+
+		; Clear queue
+		ldi		mpr, $0F
+		out		EIFR, mpr			; Clear the interrupt flags
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		mpr					; Pop mpr
+		out		SREG, mpr			; Restore Status Register
+		pop		mpr					; Restore mpr
+
+		ret							; End a function with RET
+
+;-----------------------------------------------------------
+; Func: UPD_COMP
+; Desc: update the compare register for the timers
+;-----------------------------------------------------------
+UPD_COMP:							; Begin a function with a label
+
+		; Save variable by pushing them to the stack
+		push	mpr					; Save mpr 
+		in		mpr, SREG			; Get Status Register
+		push	mpr					; Save Status Register
+		push	r0					; Save r0
+		push	r1					; Save r1
+
+		ldi		mpr, 17				; Load mpr with value 17
+		mul		mpr, speed			; Multiply mpr value with speed
+		out		OCR0, r0			; Set compare match of Timer/Counter0 to r0
+		out		OCR2, r0			; Set compare match of Timer/Counter2 to r0
+
+		; Restore variable by popping them from the stack in reverse order
+		pop		r1					; Restore r1
+		pop		r0					; Restore r0
+		pop		mpr					; Pop mpr
+		out		SREG, mpr			; Restore Status Register
+		pop		mpr					; Restore mpr
 
 		ret						; End a function with RET

@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm Tue Mar 13 13:39:27 2018
+AVRASM ver. 2.2.7  C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm Tue Mar 13 15:33:45 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
-C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
+C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
-C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
+C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\receiveChallenge.asm(16): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m128def.inc'
                                  
                                  ;***********************************************************
                                  
@@ -1226,11 +1226,11 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Includin
                                  ; ***** END OF FILE ******************************************************
                                  
                                  ;*
-                                 ;*	transmit.asm
+                                 ;*	receive.asm
                                  ;*
-                                 ;*	Transmits data to another TekBot
+                                 ;*	Receives data from another TekBot
                                  ;*
-                                 ;*	This is the TRANSMIT skeleton file for Lab 8 of ECE 375
+                                 ;*	This is the RECEIVE skeleton file for Lab 8 of ECE 375
                                  ;*
                                  ;***********************************************************
                                  ;*
@@ -1288,23 +1288,43 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Includin
                                  ;*	Internal Register Definitions and Constants
                                  ;***********************************************************
                                  .def	mpr = r16				; Multi-Purpose Register
-                                 .def	buf = r17				; Buffer for USARRRRRRRT 1
-                                 .def	addr = r18				; Address for robottttttt
+                                 .def	lit = r17				; Register for light
+                                 .def	received = r18			; Flag for address recieved
+                                 .def	numbFrozen = r22		; Number of times bot froxen
+                                 .def	whiskyState	= r23		; State of the whiskys
+                                 .def	speed = r24
                                  
+                                 .def	waitcnt = r19			; Register for wait time
+                                 .def	ilcnt = r20				; Inner loop register for wait function
+                                 .def	olcnt = r21				; Outer loop register for wait function
+                                 
+                                 .equ	WTime = 100;			; Wait time for moving
+                                 .equ	SpeedIncTime = 50		; Wait time for inc/dec pwm speed
+                                 
+                                 .equ	WskrR = 0				; Right Whisker Input Bit
+                                 .equ	WskrL = 1				; Left Whisker Input Bit
                                  .equ	EngEnR = 4				; Right Engine Enable Bit
                                  .equ	EngEnL = 7				; Left Engine Enable Bit
                                  .equ	EngDirR = 5				; Right Engine Direction Bit
                                  .equ	EngDirL = 6				; Left Engine Direction Bit
                                  
-                                 ; Use these action codes between the remote and robot
-                                 ; MSB = 1 thus:
-                                 ; control signals are shifted right by one and ORed with 0b10000000 = $80
-                                 .equ	MovFwd =  ($80|1<<(EngDirR-1)|1<<(EngDirL-1))	;0b10110000 Move Forward Action Code
-                                 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code
-                                 .equ	TurnR =   ($80|1<<(EngDirL-1))					;0b10100000 Turn Right Action Code
-                                 .equ	TurnL =   ($80|1<<(EngDirR-1))					;0b10010000 Turn Left Action Code
-                                 .equ	Halt =    ($80|1<<(EngEnR-1)|1<<(EngEnL-1))		;0b11001000 Halt Action Code
-                                 .equ	Freeze =   $F8									; Freeze signal from transmiter
+                                 .equ	BotAddress = $2A;(Enter your robot's address here (8 bits))
+                                 
+                                 .equ	InitClkVal = 3036		; Initial value of LCD clk for timer 1
+                                 .equ	LWhiskyState = 69		; The left whisker got hit
+                                 .equ	RWhiskyState = 127		; The right whisker got hit
+                                 .equ	EWhiskyState = -127		; A whisker got hit, processed, we're at the end
+                                 
+                                 ;/////////////////////////////////////////////////////////////
+                                 ;These macros are the values to make the TekBot Move.
+                                 ;/////////////////////////////////////////////////////////////
+                                 .equ	MovFwd =  (1<<EngDirR|1<<EngDirL)	;0b01100000 Move Forward Action Code
+                                 .equ	MovBck =  $00						;0b00000000 Move Backward Action Code
+                                 .equ	TurnR =   (1<<EngDirL)				;0b01000000 Turn Right Action Code
+                                 .equ	TurnL =   (1<<EngDirR)				;0b00100000 Turn Left Action Code
+                                 .equ	Halt =    (1<<EngEnR|1<<EngEnL)		;0b10010000 Halt Action Code
+                                 .equ	FreezeTx =   $F8					; Freeze signal from transmiter
+                                 .equ	FreezeRx =   $55					; Freeze signal receiver sends
                                  
                                  ;***********************************************************
                                  ;*	Start of Code Segment
@@ -1316,6 +1336,27 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Includin
                                  ;***********************************************************
                                  .org	$0000					; Beginning of IVs
 000000 c045                      		rjmp 	INIT			; Reset interrupt
+                                 
+                                 ;Should have Interrupt vectors for:
+                                 ;- Right whisker
+                                 .org	$0002
+000002 d08f                      		rcall	RWhisker		; Call right whisker
+000003 9518                      		reti
+                                 
+                                 ;- Left whisker
+                                 .org	$0004
+000004 d09e                      		rcall	LWhisker		; Call left whisker
+000005 9518                      		reti
+                                 
+                                 ;- Timer 1 normal overflow hahahaHA
+                                 .org	$001C
+00001c d0bd                      		rcall	CLK_INT
+00001d 9518                      		reti
+                                 
+                                 ;- USART receive
+                                 .org	$003C
+00003c d038                      		rcall	USART_RECV		; Call usart receive
+00003d 9518                      		reti
                                  
                                  .org	$0046					; End of Interrupt Vectors
                                  
@@ -1338,22 +1379,22 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Includin
 00004d bb08                      		out		PORTB, mpr
                                  
                                  		; Configure Port D as pull-up inputs
-00004e e008                      		ldi		mpr, 0b00001000
+00004e e004                      		ldi		mpr, 0b00000100
 00004f bb01                      		out		DDRD, mpr
 000050 ef03                      		ldi		mpr, 0b11110011
 000051 bb02                      		out		PORTD, mpr
                                  
                                  		;USART1
                                  		;Set baudrate at 2400bps
-                                 		;Enable transmitter
+                                 		;Enable receiver and enable receive interrupts
                                  		;Set frame format: 8 data bits, 2 stop bits
 000052 e002                      		ldi		mpr, $02
 000053 9300 009b                 		sts		UCSR1A, mpr
                                  
-000055 e008                      		ldi		mpr, 0b00001000
+000055 e908                      		ldi		mpr, 0b10011000
 000056 9300 009a                 		sts		UCSR1B, mpr
                                  	
-000058 e00e                      		ldi		mpr, 0b00001110
+000058 e80e                      		ldi		mpr, 0b10001110
 000059 9300 009d                 		sts		UCSR1C, mpr
                                  
                                  		; Baud rate 2400bps with double
@@ -1362,155 +1403,508 @@ C:\Users\Fauzi\Documents\GitHub\ECE-375-Lab\Lab8\Lab8\transmit.asm(16): Includin
 00005e e400                      		ldi		mpr, $40
 00005f 9300 0099                 		sts		UBRR1L, mpr
                                  
-                                 		; Init bot address
-000061 e22a                      		ldi		addr, $2A
+                                 		; Setup all the timers
+                                 		; Init speed to 0
+000061 e081                      		ldi		speed, 1
+                                 
+                                 		; Configure 8-bit Timer/Counters
+000062 e709                      		ldi		mpr, 0b01111001
+000063 bf03                      		out		TCCR0, mpr		; Initialize TCCR0 for fast pwm mode with 
+                                 								; Set OC0 on compare match, clear at bottom
+000064 bd05                      		out		TCCR2, mpr		; Initialize TCCR2 for fast pwm mode with 
+                                 								; Set OC2 on compare match, clear at bottom
+                                 
+000065 2f08                      		mov		mpr, speed
+000066 bf01                      		out		OCR0, mpr		; Initialize compare match of Timer/Counter0 to speed
+000067 bd03                      		out		OCR2, mpr		; Initialize compare match of Timer/Counter0 to speed
+                                 
+                                 		; Enable Overflow interrupt for Timer/Counter1
+000068 e004                      		ldi		mpr, (1 << 2)	
+000069 bf07                      		out		TIMSK, mpr	
+                                 			
+                                 		;External Interrupts
+                                 		;Set the Interrupt Sense Control to falling edge detection
+00006a e00a                      		ldi		mpr, 0b00001010
+00006b 9300 006a                 		sts		EICRA, mpr			; Set port 0 and 1 to falling edge
+                                 
+                                 		; Configure the External Interrupt Mask
+00006d e003                      		ldi		mpr, (1 << WskrL | 1 << WskrR)
+00006e bf09                      		out		EIMSK, mpr			; Enable port 0 and 1 for interrupts
+                                 		
+                                 		; Enable interrupts globally
+00006f 9478                      		sei
+                                 
+                                 		; Init waitcnt to 1 sec
+000070 e634                      		ldi		waitcnt, WTime
+                                 
+                                 		; Init lit to 0
+000071 e010                      		ldi		lit, 0
+                                 
+                                 		; Init received to 0
+000072 e020                      		ldi		received, 0
+                                 
+                                 		; Init number of times froxen 0
+000073 e060                      		ldi		numbFrozen, 0
                                  
                                  ;***********************************************************
                                  ;*	Main Program
                                  ;***********************************************************
                                  MAIN:
-                                 		
-                                 		; Load PIND to mpr
-000062 b300                      		in		mpr, PIND
-                                 
-                                 		; Invert it so that the button input becomes active-high passive-low
-000063 9500                      		com		mpr
-                                 
-                                 		; Check if pin 0 is set
-000064 ff00                      		sbrs	mpr, PD0
-                                 
-                                 		; Jump to check for move back if pin 0 not set
-000065 c004                      		rjmp	CHECK_BCK
-                                 
-                                 		; Load halt code to buf and send it
-000066 ec18                      		ldi		buf, Halt
-000067 d021                      		rcall	SEND_BUF
-                                 
-                                 		; Output halt code to LEDs
-000068 bb18                      		out		PORTB, buf
-000069 c01e                      		rjmp	END
-                                 CHECK_BCK:
-                                 
-                                 		; Check if pin 1 is set
-00006a ff01                      		sbrs	mpr, PD1
-                                 
-                                 		; Jump to check move forward if pin 1 not set
-00006b c004                      		rjmp	CHECK_FWD
-                                 
-                                 		; Load move back code to buf and send it
-00006c e810                      		ldi		buf, MovBck
-00006d d01b                      		rcall	SEND_BUF
-                                 
-                                 		; Output move back code to LEDs
-00006e bb18                      		out		PORTB, buf
-00006f c018                      		rjmp	END
-                                 CHECK_FWD:
-                                 
-                                 		; Check if pin 4 is set
-000070 ff04                      		sbrs	mpr, PD4
-                                 
-                                 		; Jump to check for turn right if pin 4 is not set
-000071 c004                      		rjmp	CHECK_RIGHT
-                                 
-                                 		; Load turn right code to buf and send it
-000072 eb10                      		ldi		buf, MovFwd
-000073 d015                      		rcall	SEND_BUF
-                                 
-                                 		; Output move forward code to LEDs
-000074 bb18                      		out		PORTB, buf
-000075 c012                      		rjmp	END
-                                 CHECK_RIGHT:
-                                 
-                                 		; Check if pin 5 is set
-000076 ff05                      		sbrs	mpr, PD5
-                                 
-                                 		; Jump to check for turn left if pin 5 is not set
-000077 c004                      		rjmp	CHECK_LEFT
-                                 
-                                 		; Load turn right code to buf and send it
-000078 ea10                      		ldi		buf, TurnR
-000079 d00f                      		rcall	SEND_BUF
-                                 
-                                 		; Output turn right code to LEDs
-00007a bb18                      		out		PORTB, buf
-00007b c00c                      		rjmp	END
-                                 CHECK_LEFT:
-                                 
-                                 		; Check if pin 6 is set
-00007c ff06                      		sbrs	mpr, PD6
-                                 
-                                 		; Jump to check freeze if pin 6 is not set
-00007d c004                      		rjmp	CHECK_FREEZE
-                                 
-                                 		; Load turn left code to buf and send it
-00007e e910                      		ldi		buf, TurnL
-00007f d009                      		rcall	SEND_BUF
-                                 
-                                 		; Output turn left code to LEDs
-000080 bb18                      		out		PORTB, buf
-000081 c006                      		rjmp	END
-                                 CHECK_FREEZE:
-                                 
-                                 		; Check if pin 7 is set
-000082 ff07                      		sbrs	mpr, PD7
-                                 
-                                 		; Jump to END if pin 7 is not set
-000083 c004                      		rjmp	END
-                                 
-                                 		; Load freeze code to buf and send it
-000084 ef18                      		ldi		buf, Freeze
-000085 d003                      		rcall	SEND_BUF
-                                 
-                                 		; Output freeze code to LEDs
-000086 bb18                      		out		PORTB, buf
-000087 c000                      		rjmp	END
-                                 END:
-000088 cfd9                      		rjmp	MAIN
+000074 cfff                      		rjmp	MAIN
                                  
                                  ;***********************************************************
                                  ;*	Functions and Subroutines
                                  ;***********************************************************
                                  
                                  ;-----------------------------------------------------------
-                                 ; Func: SEND_BUF
-                                 ; Desc: Send data in buf to usart after sending this bots address
+                                 ; Func: USART_RECV
+                                 ; Desc: Moves the TekBot USART recv
                                  ;-----------------------------------------------------------
-                                 SEND_BUF:
+                                 USART_RECV:
                                  
                                  		; Save mpr to stack
-000089 930f                      		push	mpr
+000075 930f                      		push	mpr
                                  
-                                 SEND_ADDR:
+                                 		; Load received usart data to mpr
+000076 9100 009c                 		lds		mpr, UDR1
                                  
-                                 		; Check if the empty flag is set for usart
-00008a 9100 009b                 		lds		mpr, UCSR1A
+                                 		; Check if command is freeze sent from other receiver bots
+000078 3505                      		cpi		mpr, FreezeRx
                                  
-                                 		; Skip next instruction if usart empty flag is set
-00008c ff05                      		sbrs	mpr, UDRE1
+                                 		; Otherwise jump to check if received data is a bot address or command
+000079 f411                      		brne	CHECK_RECEIVED
                                  
-                                 		; Loop if the flag is not set i.e. not empty
-00008d cffc                      		rjmp	SEND_ADDR
+                                 		; Freeze the bot and jump to end of function
+00007a d048                      		rcall	FREEZE_BOT
+00007b c014                      		rjmp	END_USART_RECV
                                  
-                                 		; Load this bot address to usart for transmission
-00008e 9320 009c                 		sts		UDR1, addr
+                                 CHECK_RECEIVED:
                                  
-                                 SEND_DATA:
+                                 		; Check if a bot address was already received
+00007c 3021                      		cpi		received, 1
                                  
-                                 		; Check if the empty flag is set for usart
-000090 9100 009b                 		lds		mpr, UCSR1A
+                                 		; Process received data as an action code
+00007d f021                      		breq	ACTION_CODE
                                  
-                                 		; Skip next instruction if usart empty flag is set
-000092 ff05                      		sbrs	mpr, UDRE1
+                                 		; Check if received data matches this bots address
+00007e 320a                      		cpi		mpr, BotAddress
                                  
-                                 		; Loop if the flag is not set i.e. not empty
-000093 cffc                      		rjmp	SEND_DATA
+                                 		; Jump to end of function if doesn't match
+00007f f481                      		brne	END_USART_RECV
                                  
-                                 		; Load data in buf to usart for transmission
-000094 9310 009c                 		sts		UDR1, buf
+                                 		; Set flag for matching bot address to 1 and jump to end of function
+000080 e021                      		ldi		received, 1
+000081 c00e                      		rjmp	END_USART_RECV
+                                 
+                                 ACTION_CODE:
+                                 
+                                 		; Set matching bot address flag to 0
+000082 e020                      		ldi		received, 0
+                                 
+                                 		; Check if action code is freeze
+000083 3f08                      		cpi		mpr, FreezeTx
+                                 
+                                 		; Process action code as non-freeze
+000084 f419                      		brne	NON_FREEZE
+                                 
+                                 		; Call speed dec if its freeze
+000085 d09c                      		rcall	SET_INC
+000086 940c 0090                 		jmp		END_USART_RECV
+                                 
+                                 NON_FREEZE:
+                                 
+                                 		; Shift action code left 1 bit and output result to the LEDs
+000088 0f00                      		lsl		mpr
+                                 
+                                 		; Check if its Halt code, if so call speed inc
+000089 3900                      		cpi		mpr, Halt
+00008a f021                      		breq	CALL_SPEED_INC
+                                 
+00008b 2f10                      		mov		lit, mpr
+00008c 2b18                      		or		lit, speed
+00008d bb18                      		out		PORTB, lit
+00008e c001                      		rjmp	END_USART_RECV
+                                 
+                                 CALL_SPEED_INC:
+00008f d07d                      		rcall	SET_DEC
+                                 
+                                 END_USART_RECV:
                                  
                                  		; Restore mpr from stack
-000096 910f                      		pop		mpr
-000097 9508                      		ret
+000090 910f                      		pop		mpr
+000091 9508                      		ret
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: RWHISKER
+                                 ; Desc: When the right whisker is hit, moves the bot back, turns left
+                                 ;-----------------------------------------------------------
+                                 RWHISKER:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+000092 930f                      		push	mpr			; Save mpr
+000093 b70f                      		in		mpr, SREG
+000094 930f                      		push	mpr			; Save the status register
+                                 
+                                 		; Disable all button interrupts
+000095 e000                      		ldi		mpr, 0
+000096 bf09                      		out		EIMSK, mpr
+                                 
+                                 		; Disable usart interrupts
+000097 e000                      		ldi		mpr, 0
+000098 9300 009a                 		sts		UCSR1B, mpr
+                                 
+                                 		; Back up
+00009a e000                      		ldi		mpr, MovBck
+00009b 2b08                      		or		mpr, speed
+00009c bb08                      		out		PORTB, mpr	; Move the bot backwards
+                                 
+                                 		; Load in the whisky state
+00009d e77f                      		ldi		whiskyState, RWhiskyState
+                                 		
+                                 		; Setup the clock
+00009e d063                      		rcall	INIT_CLK
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+00009f 910f                      		pop		mpr
+0000a0 bf0f                      		out		SREG, mpr	; Restore status register
+0000a1 910f                      		pop		mpr			; Restore mpr
+                                 
+0000a2 9508                      		ret						; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: LWHISKER
+                                 ; Desc: When the left whisker is hit, moves the bot back, turns right
+                                 ;-----------------------------------------------------------
+                                 LWHISKER:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+0000a3 930f                      		push	mpr			; Save mpr
+0000a4 b70f                      		in		mpr, SREG
+0000a5 930f                      		push	mpr			; Save the status register
+                                 
+                                 		; Disable all button interrupts
+0000a6 e000                      		ldi		mpr, 0
+0000a7 bf09                      		out		EIMSK, mpr
+                                 
+                                 		; Disable usart interrupts
+0000a8 e000                      		ldi		mpr, 0
+0000a9 9300 009a                 		sts		UCSR1B, mpr
+                                 
+                                 		; Back up
+0000ab e000                      		ldi		mpr, MovBck
+0000ac 2b08                      		or		mpr, speed
+0000ad bb08                      		out		PORTB, mpr	; Move the bot backwards
+                                 
+                                 		; Load in the whisky state
+0000ae e475                      		ldi		whiskyState, LWhiskyState
+                                 		
+                                 		; Setup the clock
+0000af d052                      		rcall	INIT_CLK
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+0000b0 910f                      		pop		mpr
+0000b1 bf0f                      		out		SREG, mpr	; Restore status register
+0000b2 910f                      		pop		mpr			; Restore mpr
+                                 
+0000b3 9508                      		ret						; End a function with RET
+                                 
+                                 ;----------------------------------------------------------------
+                                 ; Sub:	Wait
+                                 ; Desc:	A wait loop that is 16 + 159975*waitcnt cycles or roughly 
+                                 ;		waitcnt*10ms.  Just initialize wait for the specific amount 
+                                 ;		of time in 10ms intervals. Here is the general eqaution
+                                 ;		for the number of clock cycles in the wait loop:
+                                 ;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
+                                 ;----------------------------------------------------------------
+                                 Wait:
+0000b4 933f                      		push	waitcnt			; Save wait register
+0000b5 934f                      		push	ilcnt			; Save ilcnt register
+0000b6 935f                      		push	olcnt			; Save olcnt register
+                                 
+0000b7 ee50                      Loop:	ldi		olcnt, 224		; load olcnt register
+0000b8 ee4d                      OLoop:	ldi		ilcnt, 237		; load ilcnt register
+0000b9 954a                      ILoop:	dec		ilcnt			; decrement ilcnt
+0000ba f7f1                      		brne	ILoop			; Continue Inner Loop
+0000bb 955a                      		dec		olcnt		; decrement olcnt
+0000bc f7d9                      		brne	OLoop			; Continue Outer Loop
+0000bd 953a                      		dec		waitcnt		; Decrement wait 
+0000be f7c1                      		brne	Loop			; Continue Wait loop	
+                                 
+0000bf 915f                      		pop		olcnt		; Restore olcnt register
+0000c0 914f                      		pop		ilcnt		; Restore ilcnt register
+0000c1 913f                      		pop		waitcnt		; Restore wait register
+0000c2 9508                      		ret				; Return from subroutine
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: FREEZE_BOT
+                                 ; Desc: Freezes the bot
+                                 ;-----------------------------------------------------------
+                                 FREEZE_BOT:
+                                 
+                                 		; Save mpr to stack
+0000c3 930f                      		push	mpr
+                                 
+                                 		; Output halt code to LEDs
+0000c4 e900                      		ldi		mpr, Halt
+0000c5 bb08                      		out		PORTB, mpr
+                                 
+                                 		; Disable interrupts globally
+0000c6 94f8                      		cli
+                                 
+                                 		; Incremement times frozen by 1
+0000c7 9563                      		inc		numbFrozen
+                                 
+                                 		; If froxen 3 times, disable everything i.e. interrupts
+0000c8 3063                      		cpi		numbFrozen, 3
+0000c9 f071                      		breq	END_FREEZE
+                                 
+                                 		; Wait for 5 seconds
+0000ca dfe9                      		rcall	Wait
+0000cb dfe8                      		rcall	Wait
+0000cc dfe7                      		rcall	Wait
+0000cd dfe6                      		rcall	Wait
+0000ce dfe5                      		rcall	Wait
+                                 
+                                 		; Clear all external interrupts
+0000cf ef0f                      		ldi		mpr, $FF
+0000d0 bf08                      		out		EIFR, mpr
+                                 		
+                                 		; Clear USART interrupts
+0000d1 9100 009b                 		lds		mpr, UCSR1A
+0000d3 6e00                      		ori		mpr, 0b11100000
+0000d4 9300 009b                 		sts		UCSR1A, mpr		
+                                 
+                                 		; Enable interrupts globally
+0000d6 9478                      		sei
+                                 
+                                 		; Resume what it was doing before freeze
+0000d7 bb18                      		out		PORTB, lit
+                                 
+                                 END_FREEZE:
+                                 
+                                 		; Restore mpr from stack
+0000d8 910f                      		pop		mpr
+0000d9 9508                      		ret
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: CLK_INT
+                                 ; Desc: Interrupt function for timer/counter 1
+                                 ;-----------------------------------------------------------
+                                 CLK_INT:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+0000da 930f                      		push	mpr			; Save mpr
+0000db b70f                      		in		mpr, SREG
+0000dc 930f                      		push	mpr			; Save the status register
+                                 
+                                 		
+0000dd 377f                      		cpi		whiskyState, RWhiskyState
+0000de f019                      		breq	R_WHISKY_STATE
+                                 
+0000df 3475                      		cpi		whiskyState, LWhiskyState
+0000e0 f039                      		breq	L_WHISKY_STATE
+                                 		
+0000e1 c00c                      		rjmp	E_WHISKY_STATE
+                                 
+                                 R_WHISKY_STATE:
+                                 
+                                 		; Turn left
+0000e2 e200                      		ldi		mpr, TurnL
+0000e3 2b08                      		or		mpr, speed
+0000e4 bb08                      		out		PORTB, mpr	; Turn bot left
+                                 
+0000e5 e871                      		ldi		whiskyState, EWhiskyState
+                                 
+0000e6 d01b                      		rcall	INIT_CLK
+                                 
+0000e7 c016                      		rjmp	END_CLK_INT
+                                 
+                                 L_WHISKY_STATE:
+                                 		
+                                 		; Turn right
+0000e8 e400                      		ldi		mpr, TurnR
+0000e9 2b08                      		or		mpr, speed
+0000ea bb08                      		out		PORTB, mpr	; Turn bot left
+                                 
+0000eb e871                      		ldi		whiskyState, EWhiskyState
+                                 				
+0000ec d015                      		rcall	INIT_CLK
+                                 
+0000ed c010                      		rjmp	END_CLK_INT
+                                 
+                                 E_WHISKY_STATE:
+                                 
+                                 		; Clear queue for buttons
+0000ee ef0f                      		ldi		mpr, $FF
+0000ef bf08                      		out		EIFR, mpr	; Clear the interrupt flags
+                                 
+                                 		; Clear	queue for usart receive
+0000f0 9100 009b                 		lds		mpr, UCSR1A
+0000f2 6800                      		ori		mpr, 0b10000000
+0000f3 9300 009b                 		sts		UCSR1A, mpr
+                                 
+                                 		; Configure the External Interrupt Mask
+0000f5 e003                      		ldi		mpr, (1 << WskrL | 1 << WskrR)
+0000f6 bf09                      		out		EIMSK, mpr			; Enable port 0 and 1 for interrupts
+                                 
+                                 		; Configure USART1 receive interrupt and other things
+0000f7 e908                      		ldi		mpr, 0b10011000
+0000f8 9300 009a                 		sts		UCSR1B, mpr
+                                 
+                                 		; Disable timer 1
+0000fa e000                      		ldi		mpr, 0
+0000fb bd0e                      		out		TCCR1B, mpr
+                                 
+                                 		; Restore the previous lights - IT,S LIT!
+0000fc 2b18                      		or		lit, speed
+0000fd bb18                      		out		PORTB, lit
+                                 
+                                 END_CLK_INT:
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+0000fe 910f                      		pop		mpr
+0000ff bf0f                      		out		SREG, mpr	; Restore status register
+000100 910f                      		pop		mpr			; Restore mpr
+                                 
+000101 9508                      		ret						; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: INIT_CLK
+                                 ; Desc: Rustles clocks jimmies
+                                 ;-----------------------------------------------------------
+                                 INIT_CLK:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+000102 930f                      		push	mpr			; Save mpr
+                                 
+                                 		; Timer 1 configuration for 1 second normal hahaha
+000103 e000                      		ldi		mpr, $00		
+000104 bd0f                      		out		TCCR1A, mpr		; Initialize TCCR1A for normal mode
+000105 e004                      		ldi		mpr, 0b00000100
+000106 bd0e                      		out		TCCR1B, mpr		; Intialize TCCR1B for normal mode 
+                                 								; And a prescale of 256
+                                 
+                                 		; Set high byte of initial value to high byte of InitClkVal
+000107 e00b                      		ldi		mpr, HIGH(InitClkVal)
+000108 bd0d                      		out		TCNT1H, mpr
+                                 
+                                 		; Set low byte of initial value to low byte of InitClkVal
+000109 ed0c                      		ldi		mpr, LOW(InitClkVal)
+00010a bd0c                      		out		TCNT1L, mpr
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+00010b 910f                      		pop		mpr			; Restore mpr
+                                 
+00010c 9508                      		ret						; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: SET_DEC
+                                 ; Desc: Decrease the speed of the bump bot
+                                 ;-----------------------------------------------------------
+                                 SET_DEC:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+00010d 930f                      		push	mpr					; Save mpr 
+00010e b70f                      		in		mpr, SREG			; Get Status Register
+00010f 930f                      		push	mpr					; Save Status Register
+                                 
+000110 3080                      		cpi		speed, $00			; Compare value of 0 with speed
+000111 f031                      		breq	SKIP_DEC			; Branch if equal
+000112 958a                      		dec		speed				; Decrement speed
+                                 
+000113 b308                      		in		mpr, PORTB			; Get current values of PORTB
+000114 7f00                      		andi	mpr, $F0			; Clear lower 4 bits of mpr
+000115 2b08                      		or		mpr, speed			; Logical OR current speed with mpr
+000116 bb08                      		out		PORTB, mpr			; write value to PORTB
+                                 
+000117 d01f                      		rcall	UPD_COMP			; Call Update Compare function
+                                 
+                                 SKIP_DEC:							
+                                 		
+                                 		; Save waitcnt
+000118 933f                      		push	waitcnt
+000119 e332                      		ldi		waitcnt, SpeedIncTime
+00011a df99                      		rcall	Wait
+00011b 913f                      		pop		waitcnt
+                                 
+                                 		; Clear queue
+00011c e00f                      		ldi		mpr, $0F
+00011d bf08                      		out		EIFR, mpr			; Clear the interrupt flags
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+00011e 910f                      		pop		mpr					; Pop mpr
+00011f bf0f                      		out		SREG, mpr			; Restore Status Register
+000120 910f                      		pop		mpr					; Restore mpr
+                                 
+000121 9508                      		ret							; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: SET_INC
+                                 ; Desc: Increase the speed of the bump bot
+                                 ;-----------------------------------------------------------
+                                 SET_INC:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+000122 930f                      		push	mpr					; Save mpr 
+000123 b70f                      		in		mpr, SREG			; Get Status Register
+000124 930f                      		push	mpr					; Save Status Register
+                                 
+000125 308f                      		cpi		speed, $0F			; Compare value of 15 with speed
+000126 f031                      		breq	SKIP_INC			; Branch if equal
+000127 9583                      		inc		speed				; Increment speed
+                                 
+000128 b308                      		in		mpr, PORTB			; Get current values of PORTB
+000129 7f00                      		andi	mpr, $F0			; Clear lower 4 bits of mpr
+00012a 2b08                      		or		mpr, speed			; Logical OR current speed with mpr
+00012b bb08                      		out		PORTB, mpr			; write value to PORTB
+                                 
+00012c d00a                      		rcall	UPD_COMP			; Call Update Compare function
+                                 
+                                 SKIP_INC:
+                                 
+                                 		; Save waitcnt
+00012d 933f                      		push	waitcnt
+00012e e332                      		ldi		waitcnt, SpeedIncTime
+00012f df84                      		rcall	Wait
+000130 913f                      		pop		waitcnt
+                                 
+                                 		; Clear queue
+000131 e00f                      		ldi		mpr, $0F
+000132 bf08                      		out		EIFR, mpr			; Clear the interrupt flags
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+000133 910f                      		pop		mpr					; Pop mpr
+000134 bf0f                      		out		SREG, mpr			; Restore Status Register
+000135 910f                      		pop		mpr					; Restore mpr
+                                 
+000136 9508                      		ret							; End a function with RET
+                                 
+                                 ;-----------------------------------------------------------
+                                 ; Func: UPD_COMP
+                                 ; Desc: update the compare register for the timers
+                                 ;-----------------------------------------------------------
+                                 UPD_COMP:							; Begin a function with a label
+                                 
+                                 		; Save variable by pushing them to the stack
+000137 930f                      		push	mpr					; Save mpr 
+000138 b70f                      		in		mpr, SREG			; Get Status Register
+000139 930f                      		push	mpr					; Save Status Register
+00013a 920f                      		push	r0					; Save r0
+00013b 921f                      		push	r1					; Save r1
+                                 
+00013c e101                      		ldi		mpr, 17				; Load mpr with value 17
+00013d 9f08                      		mul		mpr, speed			; Multiply mpr value with speed
+00013e be01                      		out		OCR0, r0			; Set compare match of Timer/Counter0 to r0
+00013f bc03                      		out		OCR2, r0			; Set compare match of Timer/Counter2 to r0
+                                 
+                                 		; Restore variable by popping them from the stack in reverse order
+000140 901f                      		pop		r1					; Restore r1
+000141 900f                      		pop		r0					; Restore r0
+000142 910f                      		pop		mpr					; Pop mpr
+000143 bf0f                      		out		SREG, mpr			; Restore Status Register
+000144 910f                      		pop		mpr					; Restore mpr
+                                 
+000145 9508                      		ret						; End a function with RET
 
 
 RESOURCE USE INFORMATION
@@ -1528,40 +1922,40 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega128" register use summary:
-x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :   0 y  :   0 z  :   0 r0 :   4 r1 :   2 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  36 r17:  13 r18:   2 r19:   0 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
+r13:   0 r14:   0 r15:   0 r16: 143 r17:   7 r18:   4 r19:  10 r20:   4 
+r21:   4 r22:   3 r23:   6 r24:  15 r25:   0 r26:   0 r27:   0 r28:   0 
 r29:   0 r30:   0 r31:   0 
-Registers used: 3 out of 35 (8.6%)
+Registers used: 11 out of 35 (31.4%)
 
 "ATmega128" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
-andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   0 brge  :   0 brhc  :   0 
+andi  :   2 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   7 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :   0 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brne  :   6 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
-clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
-clt   :   0 clv   :   0 clz   :   0 com   :   1 cp    :   0 cpc   :   0 
-cpi   :   0 cpse  :   0 dec   :   0 elpm  :   0 eor   :   0 fmul  :   0 
-fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   1 inc   :   0 
-jmp   :   0 ld    :   0 ldd   :   0 ldi   :  18 lds   :   2 lpm   :   0 
-lsl   :   0 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 
-mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  12 
-pop   :   1 push  :   1 rcall :   6 ret   :   1 reti  :   0 rjmp  :  16 
+clc   :   0 clh   :   0 cli   :   1 cln   :   0 clr   :   0 cls   :   0 
+clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
+cpi   :  10 cpse  :   0 dec   :   4 elpm  :   0 eor   :   0 fmul  :   0 
+fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   8 inc   :   2 
+jmp   :   1 ld    :   0 ldd   :   0 ldi   :  51 lds   :   3 lpm   :   0 
+lsl   :   1 lsr   :   0 mov   :   2 movw  :   0 mul   :   1 muls  :   0 
+mulsu :   0 neg   :   0 nop   :   0 or    :   8 ori   :   2 out   :  42 
+pop   :  22 push  :  22 rcall :  20 ret   :  10 reti  :   4 rjmp  :   8 
 rol   :   0 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
-sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   8 sec   :   0 
-seh   :   0 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 
+sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
+seh   :   0 sei   :   2 sen   :   0 ser   :   0 ses   :   0 set   :   0 
 sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 
-sts   :   7 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
+sts   :  11 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
 
-Instructions used: 12 out of 114 (10.5%)
+Instructions used: 25 out of 114 (21.9%)
 
 "ATmega128" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000130    166      0    166  131072   0.1%
+[.cseg] 0x000000 0x00028c    530      0    530  131072   0.4%
 [.dseg] 0x000100 0x000100      0      0      0    4096   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    4096   0.0%
 
